@@ -1,0 +1,26 @@
+{
+    "name": "chanmix51/ParameterJuicer",
+    "type": "library",
+    "description":  "Parameter validator and cleaner",
+    "keywords": ["parameters", "validator", "cleaner"],
+    "license":  "MIT",
+    "authors":  [ { "name": "Grégoire HUBERT", "email": "hubert.greg@gmail.com", "homepage": "http://www.coolkeums.org" } ],
+    "require": {
+        "php": ">=7.0"
+    },
+    "require-dev": {
+        "atoum/atoum" : "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Chanmix51\\ParameterJuicer\\": "sources/lib"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Chanmix51\\ParameterJuicer\\Tests\\": "sources/tests"
+        }
+    },
+    "minimum-stability": "dev"
+}
+
