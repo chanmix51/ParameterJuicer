@@ -10,6 +10,7 @@
 namespace Chanmix51\ParameterJuicer;
 
 use Chanmix51\ParameterJuicer\ValidationException;
+use Chanmix51\ParameterJuicer\ParameterJuicerInterface;
 
 /**
  * ParameterJuicer
@@ -19,7 +20,7 @@ use Chanmix51\ParameterJuicer\ValidationException;
  * @author    Grégoire HUBERT <hubert.greg@gmail.com>
  * @license   X11 {@link http://opensource.org/licenses/mit-license.php}
  */
-class ParameterJuicer
+class ParameterJuicer implements ParameterJuicerInterface
 {
     const STRATEGY_IGNORE_EXTRA_VALUES = 0;
     const STRATEGY_REFUSE_EXTRA_VALUES = 1;
@@ -34,6 +35,16 @@ class ParameterJuicer
     /** @var  array     list of fields, this gives an information if the field
                         is mandatory or optional. */
     protected $fields       = [];
+
+    /**
+     * getName
+     *
+     * @see     ParameterJuicerInterface
+     */
+    public function getName(): string
+    {
+        return 'anonymous';
+    }
 
     /**
      * addField
@@ -62,9 +73,34 @@ class ParameterJuicer
     }
 
     /**
+     * removeField
+     *
+     * Remove an existing field with all validators or cleaners associated to
+     * it if any. It throws an exception if the field does not exist.
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function removeField(string $name): self
+    {
+        $this->checkFieldExists($name);
+        unset($this->fields[$name]);
+
+        if (isset($this->validators[$name]))
+            unset($this->validators[$name]);
+
+        if (isset($this->cleaners[$name]))
+            unset($this->cleaners[$name]);
+
+        return $this;
+    }
+
+    /**
      * addValidator
      *
-     * Add a new validator associated to a key. If the field is not already declared, it is created.
+     * Add a new validator associated to a key. If the field is not already
+     * declared, it is created.
+     *
+     * @throws \InvalidArgumentException
      */
     public function addValidator(string $name, callable $validator): self
     {
@@ -80,6 +116,8 @@ class ParameterJuicer
      * addCleaner
      *
      * Add a new cleaner associated to a key.
+     *
+     * @throws \InvalidArgumentException
      */
     public function addCleaner($name, callable $cleaner): self
     {
@@ -92,35 +130,61 @@ class ParameterJuicer
     }
 
     /**
-     * validateAndClean
+     * addJuicer
      *
-     * Validate and clean the given data according to the definition.
+     * Add a juicer to clean a validate a subset of data.
+     *
+     * @throws \InvalidArgumentException
      */
-    public function validateAndClean(array $values, $strategy = 0): array
+    public function addJuicer(
+        string $name,
+        ParameterJuicerInterface $juicer,
+        int $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES
+    ): self
     {
-        $exception = new ValidationException;
-
-        if ($strategy <> self::STRATEGY_ACCEPT_EXTRA_VALUES) {
-            $values = $this->applyStrategy($exception, $values, $strategy);
-        } 
-
         return $this
-            ->validate($values, $exception)
-            ->clean($values)
+            ->addCleaner($name, [$juicer, 'clean'])
+            ->addValidator($name, [$juicer, 'validate'])
             ;
+    }
+
+    /**
+     * squash
+     *
+     * Clean & validate the given data according to the definition.
+     *
+     * @see     ParameterJuicerInterface
+     */
+    public function squash(
+        array   $values,
+        int     $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES
+    ): array
+    {
+        return $this->validate(
+            $this->getName(),
+            $this->clean($values),
+            $strategy
+        );
     }
 
     /**
      * validate
      *
      * Trigger validation on values.
+     *
+     * @see     ParameterJuicerInterface
      */
-    protected function validate(array $values, ValidationException $exception = null): self
+    public function validate(
+        string $name,
+        array $values,
+        int $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES
+    ): array
     {
-        $exception = isset($exception)
-            ? $exception
-            : new ValidationException
-            ;
+        $exception = new ValidationException;
+
+        if ($strategy <> self::STRATEGY_ACCEPT_EXTRA_VALUES) {
+            $values = $this->applyStrategy($exception, $values, $strategy);
+        }
 
         foreach ($this->fields as $field => $is_mandatory) {
             $is_set = isset($values[$field]);
@@ -134,7 +198,7 @@ class ParameterJuicer
             if ($is_set && isset($this->validators[$field])) {
                 foreach ($this->validators[$field] as $validator) {
                     try {
-                        if (call_user_func($validator, $values[$field]) === false) {
+                        if (call_user_func($validator, $field, $values[$field], $strategy) === false) {
                             throw new \RuntimeException(
                                 sprintf("One of the validators for the field '%s' has a PHP error.", $field)
                             );
@@ -147,23 +211,33 @@ class ParameterJuicer
         }
 
         if ($exception->hasMessages()) {
+            $exception->addMessage(
+                sprintf(
+                    "Validation of set '%s' failed.",
+                    $this->getName()
+                )
+            );
+
             throw $exception;
         }
 
-        return $this;
+        return $values;
     }
 
     /**
      * clean
      *
      * Clean and return values.
+     *
+     * @see     ParameterJuicerInterface
      */
-    protected function clean(array $values): array
+    public function clean(array $values): array
     {
         foreach ($this->cleaners as $field_name => $cleaners) {
             if (isset($values[$field_name])) {
                 foreach ($cleaners as $cleaner) {
-                    $values[$field_name] = call_user_func($cleaner, $values[$field_name]);
+                    $values[$field_name] =
+                        call_user_func($cleaner, $values[$field_name]);
                 }
             }
         }
@@ -203,9 +277,8 @@ class ParameterJuicer
             return $values;
         }
 
-        if ($strategy === self::STRATEGY_IGNORE_EXTRA_VALUES) {
+        if ($strategy === self::STRATEGY_IGNORE_EXTRA_VALUES)
             return array_diff_key($values, array_flip($diff_keys));
-        }
 
         throw new \RuntimeException(
             sprintf(
