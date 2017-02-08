@@ -7,7 +7,7 @@ simple parser, validator and cleaner for data.
 
 ## Install
 
-`composer require chanmix51/parameterJuicer`
+`composer require chanmix51/parameter-juicer`
 
 ## Usage
 
