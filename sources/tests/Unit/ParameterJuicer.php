@@ -86,6 +86,11 @@ class ParameterJuicer extends Atoum
                     ;
     }
 
+    /**
+     * butPikaOrChu
+     *
+     * Data provider for testMandatoryFieldsValidationFail
+     */
     public function butPikaOrChu(): array
     {
         return [
@@ -116,6 +121,11 @@ class ParameterJuicer extends Atoum
             ;
     }
 
+    /**
+     * testMandatoryFieldValidation
+     *
+     * Testing validation & mandatory fields
+     */
     public function testMandatoryFieldValidation()
     {
         $validate_int = function($v) {
@@ -126,7 +136,6 @@ class ParameterJuicer extends Atoum
                 )
             );
         };
-
         $validate_range = function($v) {
             if (10 < $v || 1 > $v) throw new ValidationException(
                 sprintf(
@@ -157,6 +166,25 @@ class ParameterJuicer extends Atoum
                 ->exception(function() use ($juicer, $data) { return $juicer->validateAndClean($data, 1); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\ValidationException')
                     ->message->contains('Field must be an integer')
+            ;
+    }
+
+    /**
+     * testCleaner
+     *
+     * Simple test for cleaners.
+     */
+    public function testCleaner()
+    {
+        $juicer = $this->newTestedInstance()
+            ->addField('pika')
+            ->addCleaner('pika', function($v) { return trim($v); })
+            ->addCleaner('pika', function($v) { return strtolower($v); })
+            ;
+        $this
+            ->assert("Checking cleaners are called,")
+                ->array($juicer->validateAndClean(['pika' => ' This Is It  ']))
+                    ->isEqualTo(['pika' => 'this is it'])
             ;
     }
 }

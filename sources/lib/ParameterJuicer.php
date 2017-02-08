@@ -160,10 +160,10 @@ class ParameterJuicer
      */
     protected function clean(array $values): array
     {
-        foreach ($values as $field_name => $value) {
-            if (isset($this->cleaners[$field_name])) {
-                foreach ($this->cleaners[$field_name] as $cleaner) {
-                    $values[$field_name] = call_user_func($cleaner, $value);
+        foreach ($this->cleaners as $field_name => $cleaners) {
+            if (isset($values[$field_name])) {
+                foreach ($cleaners as $cleaner) {
+                    $values[$field_name] = call_user_func($cleaner, $values[$field_name]);
                 }
             }
         }
