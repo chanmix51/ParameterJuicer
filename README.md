@@ -9,8 +9,10 @@ simple parser, validator and cleaner for data.
 
 ## Usage
 
+### Anonymous definition
+
 Here is a fast and simple example of an anonymous juicer. It cleans and
-validate the data according to the given definition.
+validates the data according to the given definition.
 
 ```php
         use Chanmix51\ParameterJuicer\ParameterJuicer as Juicer;
@@ -42,9 +44,9 @@ validate the data according to the given definition.
 
 There are 3 strategies to handle extra data not defined in the plan:
 
-1. `ParameterJuicer::STRATEGY_ACCEPT_EXTRA_VALUES` (0) let the extra data untouched (be aware they might be untrusted data).
-1. `ParameterJuicer::STRATEGY_IGNORE_EXTRA_VALUES` (1) discard extra data.
-1. `ParameterJuicer::STRATEGY_REFUSE_EXTRA_VALUES` (2) treat extra fields are anomalies and trigger the `ValidationException`.
+1. `ParameterJuicer::STRATEGY_ACCEPT_EXTRA_VALUES` (0) let the extra data untouched (be aware they ARE untrusted data).
+1. `ParameterJuicer::STRATEGY_IGNORE_EXTRA_VALUES` (1) discard extra data (this is the default strategy).
+1. `ParameterJuicer::STRATEGY_REFUSE_EXTRA_VALUES` (2) treat extra fields as anomalies and trigger the `ValidationException`.
 
 ### Custom Juicer class
 
@@ -96,12 +98,14 @@ class PikaChuJuicer extends Juicer
     }
 }
 
-$trusted_data = (new PikaChuJuicer)>squash($untrusted_data);
+$trusted_data = (new PikaChuJuicer)
+    ->squash($untrusted_data, Juicer::STRATEGY_REFUSE_EXTRA_VALUES)
+    ;
 ```
 
 ### Using a juicer class to clean & validate nested data.
 
-It may happen a data set embeds a data that already has a Juicer class.
+It may happen a dataset embeds in a field another dataset that has already its own Juicer class.
 
 ```php
 $juicer = (new Juicer)
