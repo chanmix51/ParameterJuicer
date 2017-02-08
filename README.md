@@ -1,6 +1,7 @@
 # ParameterJuicer
 
 [![Build Status](https://travis-ci.org/chanmix51/ParameterJuicer.svg?branch=master)](https://travis-ci.org/chanmix51/ParameterJuicer)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/?branch=master)
 
 How to extract the juice from your parameters, CSV, forms etc. data. This is a
 simple parser, validator and cleaner for data.
