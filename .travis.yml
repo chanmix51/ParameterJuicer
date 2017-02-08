@@ -1,0 +1,7 @@
+language: php
+php:
+  - "7.0"
+install: composer install --dev
+script:
+  - php vendor/atoum/atoum/bin/atoum --no-code-coverage -d sources/tests/Unit/
+
