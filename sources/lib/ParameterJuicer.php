@@ -27,14 +27,14 @@ class ParameterJuicer implements ParameterJuicerInterface
     const STRATEGY_ACCEPT_EXTRA_VALUES = 2;
 
     /** @var  array     list of validators, must be callables */
-    protected $validators   = [];
+    protected $validators = [];
 
     /** @var  array     list of cleaners, must be callables */
-    protected $cleaners     = [];
+    protected $cleaners = [];
 
     /** @var  array     list of fields, this gives an information if the field
                         is mandatory or optional. */
-    protected $fields       = [];
+    protected $fields = [];
 
     /**
      * getName
@@ -85,11 +85,13 @@ class ParameterJuicer implements ParameterJuicerInterface
         $this->checkFieldExists($name);
         unset($this->fields[$name]);
 
-        if (isset($this->validators[$name]))
+        if (isset($this->validators[$name])) {
             unset($this->validators[$name]);
+        }
 
-        if (isset($this->cleaners[$name]))
+        if (isset($this->cleaners[$name])) {
             unset($this->cleaners[$name]);
+        }
 
         return $this;
     }
@@ -106,7 +108,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     {
         $this
             ->checkFieldExists($name)
-            ->validators[$name][]  = $validator
+            ->validators[$name][] = $validator
             ;
 
         return $this;
@@ -119,7 +121,7 @@ class ParameterJuicer implements ParameterJuicerInterface
      *
      * @throws \InvalidArgumentException
      */
-    public function addCleaner($name, callable $cleaner): self
+    public function addCleaner(string $name, callable $cleaner): self
     {
         $this
             ->checkFieldExists($name)
@@ -196,30 +198,11 @@ class ParameterJuicer implements ParameterJuicerInterface
             }
 
             if ($is_set && isset($this->validators[$field])) {
-                foreach ($this->validators[$field] as $validator) {
-                    try {
-                        if (call_user_func($validator, $field, $values[$field], $strategy) === false) {
-                            throw new \RuntimeException(
-                                sprintf("One of the validators for the field '%s' has a PHP error.", $field)
-                            );
-                        }
-                    } catch (ValidationException $e) {
-                        $exception->addMessage($e->getMessage());
-                    }
-                }
+                $this->launchValidatorsFor($field, $values[$field], $strategy, $exception);
             }
         }
 
-        if ($exception->hasMessages()) {
-            $exception->addMessage(
-                sprintf(
-                    "Validation of set '%s' failed.",
-                    $this->getName()
-                )
-            );
-
-            throw $exception;
-        }
+        $this->launchExceptionWhenFail($exception);
 
         return $values;
     }
@@ -261,8 +244,9 @@ class ParameterJuicer implements ParameterJuicerInterface
             )
         );
 
-        if (count($diff_keys) === 0 || $strategy === self::STRATEGY_ACCEPT_EXTRA_VALUES)
+        if (count($diff_keys) === 0 || $strategy === self::STRATEGY_ACCEPT_EXTRA_VALUES) {
             return $values;
+        }
 
         if ($strategy === self::STRATEGY_REFUSE_EXTRA_VALUES) {
             foreach ($diff_keys as $key) {
@@ -277,8 +261,9 @@ class ParameterJuicer implements ParameterJuicerInterface
             return $values;
         }
 
-        if ($strategy === self::STRATEGY_IGNORE_EXTRA_VALUES)
+        if ($strategy === self::STRATEGY_IGNORE_EXTRA_VALUES) {
             return array_diff_key($values, array_flip($diff_keys));
+        }
 
         throw new \RuntimeException(
             sprintf(
@@ -305,6 +290,45 @@ class ParameterJuicer implements ParameterJuicerInterface
                     join(', ', array_keys($this->fields))
                 )
             );
+        }
+
+        return $this;
+    }
+
+    /**
+     * launchExceptionWhenFail
+     *
+     * Check if the validation exception has messages. If yes, the exception is
+     * thrown.
+     */
+    private function launchExceptionWhenFail(ValidationException $exception): self
+    {
+        if ($exception->hasMessages()) {
+            $exception->addMessage(
+                sprintf(
+                    "Validation of set '%s' failed.",
+                    $this->getName()
+                )
+            );
+
+            throw $exception;
+        }
+
+        return $this;
+    }
+
+    private function launchValidatorsFor(string $field, $value, int $strategy, ValidationException $exception): self
+    {
+        foreach ($this->validators[$field] as $validator) {
+            try {
+                if (call_user_func($validator, $field, $value, $strategy) === false) {
+                    throw new \RuntimeException(
+                        sprintf("One of the validators for the field '%s' has a PHP error.", $field)
+                    );
+                }
+            } catch (ValidationException $e) {
+                $exception->addMessage($e->getMessage());
+            }
         }
 
         return $this;
