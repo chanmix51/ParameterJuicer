@@ -38,7 +38,7 @@ class PokemonJuicer extends Juicer
             ->addField('pika_chu')
                 ->addValidator('pika_chu', [$this, 'greaterThanZeroValidator'])
             ->addField('pika_chu')
-                ->addJuicer('pika_chu', new PikaChuJuicer, Juicer::STRATEGY_REFUSE_EXTRA_VALUES)
+                ->addJuicer('pika_chu', new PikaChuJuicer)
             ;
     }
 

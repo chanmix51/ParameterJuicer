@@ -138,11 +138,7 @@ class ParameterJuicer implements ParameterJuicerInterface
      *
      * @throws \InvalidArgumentException
      */
-    public function addJuicer(
-        string $name,
-        ParameterJuicerInterface $juicer,
-        int $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES
-    ): self
+    public function addJuicer(string $name, ParameterJuicerInterface $juicer): self
     {
         return $this
             ->addCleaner($name, [$juicer, 'clean'])
