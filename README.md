@@ -1,5 +1,7 @@
 # ParameterJuicer
 
+[![Build Status](https://travis-ci.org/chanmix51/ParameterJuicer.svg?branch=master)](https://travis-ci.org/chanmix51/ParameterJuicer)
+
 How to extract the juice from your parameters, CSV, forms etc. data. This is a
 simple parser, validator and cleaner for data.
 
