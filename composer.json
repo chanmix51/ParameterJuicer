@@ -1,5 +1,5 @@
 {
-    "name": "chanmix51/ParameterJuicer",
+    "name": "chanmix51/parameter-juicer",
     "type": "library",
     "description":  "Parameter validator and cleaner",
     "keywords": ["parameters", "validator", "cleaner"],
