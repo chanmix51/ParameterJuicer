@@ -22,30 +22,41 @@ class PikaChuJuicer extends Juicer
     {
         $this
             ->addField('pika')
-                ->addCleaner('pika', function($v) { return strtolower(trim($v)); })
-                ->addValidator('pika', function($k, $v) {
-                    if (strlen($v) === 0) {
-                        throw new ValidationException(
-                            sprintf(
-                                "Field '%s' is an empty string.",
-                                $k
-                            )
-                        );
-                    }
-                })
+                ->addCleaner('pika', [$this, 'doTrimAndLowerString'])
+                ->addValidator('pika', [$this, 'mustNotBeEmptyString'])
             ->addField('chu', false)
                 ->addCleaner('chu', function($v) { return $v + 0; })
-                ->addValidator('chu', function($k, $v) {
-                    if ($v <= 0) {
-                        throw new ValidationException(
-                            sprintf(
-                                "Field '%s' must be strictly positive (%f given).",
-                                $k,
-                                $v
-                            )
-                        );
-                    }
-                })
+                ->addValidator('chu', [$this, 'mustBeANumberStrictlyPositive'])
         ;
+    }
+
+    protected function doTrimAndLowerString($value): string
+    {
+        return strtolower(trim($value));
+    }
+
+    protected function mustNotBeEmptyString($name, $value)
+    {
+        if (strlen($value) === 0) {
+            throw new ValidationException(
+                sprintf(
+                    "Field '%s' is an empty string.",
+                    $name
+                )
+            );
+        }
+    }
+
+    protected function mustBeANumberStrictlyPositive($name, $value)
+    {
+        if ($value <= 0) {
+            throw new ValidationException(
+                sprintf(
+                    "Field '%s' must be strictly positive (%f given).",
+                    $name,
+                    $value
+                )
+            );
+        }
     }
 }
