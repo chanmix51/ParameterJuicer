@@ -27,8 +27,7 @@ validates the data according to the given definition.
             if (10 < $value || 1 > $value) {
                 throw new ValidationException(
                     sprintf(
-                        "Field '%s' must be between 1 and 10 (%d given).",
-                        $field,
+                        "must be between 1 and 10 (%d given).",
                         $value
                     )
                 );
@@ -57,7 +56,7 @@ validates the data according to the given definition.
                 // ↓ throw a ValidationException because "chu" is mandatory
                 $juicer->squash(['pika' => '3', 'whatever' => 'a']);
             } catch (ValidationException $e) {
-                // manage failed validation
+                // Get the validation errors from the exception (see below)
             }
 ```
 
@@ -76,6 +75,17 @@ It is possible to embed cleaning & validation rules in a dedicated class:
 ```php
 class PikaChuJuicer extends ParameterJuicer
 {
+    /**
+     * getName
+     *
+     * This is the name of the data type. It is output in the validation
+       errors.
+     */
+    public function getName(): string
+    {
+        return 'field_type';
+    }
+
     public function __construct()
     {
         $this
@@ -97,12 +107,7 @@ class PikaChuJuicer extends ParameterJuicer
     public function mustNotBeEmptyString($name, $value)
     {
         if (strlen($value) === 0) {
-            throw new ValidationException(
-                sprintf(
-                    "Field '%s' is an empty string.",
-                    $name
-                )
-            );
+            throw new ValidationException("must no be an empty string");
         }
     }
 
@@ -110,9 +115,8 @@ class PikaChuJuicer extends ParameterJuicer
     {
         if ($value <= 0) {
             throw new ValidationException(
-                sprintf(
-                    "Field '%s' must be strictly positive (%f given).",
-                    $name,
+                printf(
+                    "must be strictly positive (%f given)",
                     $value
                 )
             );
@@ -183,7 +187,7 @@ A juicer either produces clean values or a `ValidationException` in case of the 
 try {
     $my_juicer->squash($data);
 } catch (ValidationException $e) {
-    printf($e); // ← call $e->getFancyMessage()
+    printf($e); // ← this calls $e->getFancyMessage()
 }
 ```
 Assuming a set `my_data` is nesting a field `pikachu` the output is like the following:
