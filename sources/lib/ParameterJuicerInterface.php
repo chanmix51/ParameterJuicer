@@ -9,30 +9,33 @@
  */
 namespace Chanmix51\ParameterJuicer;
 
+use Chanmix51\ParameterJuicer\Exception\ValidationException;
+
+/**
+ * ParameterJuicerInterface
+ *
+ * Inteface to embed juicers.
+ *
+ * @package     ParameterJuicer
+ * @copyright   2017 Grégoire HUBERT
+ * @author      Grégoire HUBERT <hubert.greg@gmail.com>
+ * @license     X11 {@link http://opensource.org/licenses/mit-license.php}
+ */
 interface ParameterJuicerInterface
 {
     /**
-     * squash
+     * clean
      *
-     * Clean & validate data.
-     *
-     * @throws  ValidationException
+     * Filter the data prior to validation.
      */
-    public function squash(array $values, int $strategy): array;
+    public function clean(array $values): array;
 
     /**
      * validate
      *
-     * Trigger validation and extra fields strategies.
+     * Trigger validation.
      *
      * @throws  ValidationException
      */
-    public function validate(string $name, array $values, int $strategy): array;
-
-    /**
-     * clean
-     *
-     * Returned clean data for validation.
-     */
-    public function clean(array $values): array;
+    public function validate(string $name, array $values): ParameterJuicerInterface;
 }

@@ -20,28 +20,40 @@ validates the data according to the given definition.
 
 ```php
         use Chanmix51\ParameterJuicer\ParameterJuicer as Juicer;
+        use Chanmix51\ParameterJuicer\Exception\ValidationException;
 
-        $juicer = ($new Juicer)
-            ->addCleaner('pika')
-                ->addCleaner('pika', function($v) { return (int) $v; })
-                ->addValidator('pika', function($k, $v) {
-                    if (10 < $v || 1 > $v) {
-                        throw new ValidationException(
-                            sprintf(
-                                "Field '%s' must be between 1 and 10 (%d given).",
-                                $k,
-                                $v
-                            )
-                        );
-                    }
-                })
+        $turn_to_integer = function($v):int { return (int) $v; };
+        $must_be_between_1_and_10 = function(string $field, int $value) {
+            if (10 < $value || 1 > $value) {
+                throw new ValidationException(
+                    sprintf(
+                        "Field '%s' must be between 1 and 10 (%d given).",
+                        $field,
+                        $value
+                    )
+                );
+            }
+        };
+
+        $juicer = (new Juicer)
+            ->addField('pika')
+                ->addCleaner('pika', $turn_to_integer)
+                ->addValidator('pika', $must_be_between_1_and_10)
+                ->setDefaultValue('pika', 9) // ← when not set
             ->addField('chu')
-            ->addField('not mandatory', false)
-            ;
+                ->addCleaner('chu', function($v) { return trim($v); })
+            ->addField('not mandatory', false)   // ← not mandatory
+            ->setStrategy(Juicer::STRATEGY_IGNORE_EXTRA_VALUES)
+            ;            // ↑ extra values are removed
 
-            $clean_data = $juicer
-                ->squash(['pika' => '3', 'whatever' => 'a'], Juicer::STRATEGY_IGNORE_EXTRA_VALUES)
-            ; // returns ['pika' => 3]
+            // throw a ValidationException because "chu" is mandatory
+            $juicer->squash(['pika' => '3', 'whatever' => 'a']);
+
+            // return ["pika" => 9, "chu" => '']
+            $juicer->squash(['chu' => null, 'whatever' => 'a']);
+
+            // return ["pika" => 3, "chu" => ""]
+            $juicer->squash(['pika' => '3', 'chu' => '', 'whatever' => 'a']);
 ```
 
 ### Extra fields strategies
@@ -57,7 +69,7 @@ There are 3 strategies to handle extra data not defined in the plan:
 It is possible to embed cleaning & validation rules in a dedicated class:
 
 ```php
-class PikaChuJuicer extends Juicer
+class PikaChuJuicer extends ParameterJuicer
 {
     public function __construct()
     {
@@ -71,12 +83,12 @@ class PikaChuJuicer extends Juicer
         ;
     }
 
-    protected function doTrimAndLowerString($value): string
+    public function doTrimAndLowerString($value): string
     {
         return strtolower(trim($value));
     }
 
-    protected function mustNotBeEmptyString($name, $value)
+    public function mustNotBeEmptyString($name, $value)
     {
         if (strlen($value) === 0) {
             throw new ValidationException(
@@ -88,7 +100,7 @@ class PikaChuJuicer extends Juicer
         }
     }
 
-    protected function mustBeANumberStrictlyPositive($name, $value)
+    public function mustBeANumberStrictlyPositive($name, $value)
     {
         if ($value <= 0) {
             throw new ValidationException(
@@ -107,15 +119,17 @@ $trusted_data = (new PikaChuJuicer)
     ;
 ```
 
+This is particularly useful because it makes cleaners and validators to be unit-testable in addition to the juicer being usable in different portions of the code.
+
 ### Using a juicer class to clean & validate nested data.
 
-It may happen a dataset embeds in a field another dataset that has already its own Juicer class.
+It may happen a dataset embeds in a field another dataset that already has its own Juicer class.
 
 ```php
 $juicer = (new Juicer)
     ->addField('pokemon_id')
     ->addField('pika_chu')
-        ->addJuicer('pika_chu', new PikaChuJuicer, Juicer::STRATEGY_REFUSE_EXTRA_VALUES)
+        ->addJuicer('pika_chu', new PikaChuJuicer)
         ->addValidator('pika_chu', … // add an extra validator on this field)
     ;
 ```

@@ -9,16 +9,30 @@
  */
 namespace Chanmix51\ParameterJuicer;
 
-use Chanmix51\ParameterJuicer\ValidationException;
+use Chanmix51\ParameterJuicer\Exception\ValidationException;
+use Chanmix51\ParameterJuicer\Exception\CleanerRemoveFieldException;
 use Chanmix51\ParameterJuicer\ParameterJuicerInterface;
 
 /**
  * ParameterJuicer
  *
+ * Cleaner and validator for data set.
+ *
+ * A "cleaner" is a callable that takes a data and returns the data tranformed.
+ * It can throw a CleanerRemoveFieldException if the field is to be unset.
+ *
+ * A "default value" is set when the field is NOT PRESENT. In the case the
+ * field exists and has no value (null), the default value does not apply.
+ *
+ * A "validator" is a callable that throws a ValidationException when the given
+ * data is detected as invalid.
+ *
  * @package   ParameterJuicer
  * @copyright 2017 Grégoire HUBERT
  * @author    Grégoire HUBERT <hubert.greg@gmail.com>
  * @license   X11 {@link http://opensource.org/licenses/mit-license.php}
+ *
+ * @see       ParameterJuicerInterface
  */
 class ParameterJuicer implements ParameterJuicerInterface
 {
@@ -35,6 +49,12 @@ class ParameterJuicer implements ParameterJuicerInterface
     /** @var  array     list of fields, this gives an information if the field
                         is mandatory or optional. */
     protected $fields = [];
+
+    /** @var  array     list of default values */
+    protected $default_values = [];
+
+    /** @var  int       strategy of this juicer */
+    public    $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES;
 
     /**
      * getName
@@ -132,6 +152,26 @@ class ParameterJuicer implements ParameterJuicerInterface
     }
 
     /**
+     * setDefaultValue
+     *
+     * Set a default value for a field. If the field is not set or its value is
+     * null, this value will be set instead. This is triggered AFTER the
+     * cleaners which is useful because some cleanders can return null and then
+     * default value is applied.
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function setDefaultValue(string $name, $value): self
+    {
+        $this
+            ->checkFieldExists($name)
+            ->default_values[$name] = $value
+            ;
+
+        return $this;
+    }
+
+    /**
      * addJuicer
      *
      * Add a juicer to clean a validate a subset of data.
@@ -147,22 +187,28 @@ class ParameterJuicer implements ParameterJuicerInterface
     }
 
     /**
+     * setStrategy
+     *
+     * Set the extra fields strategy for this juicer.
+     */
+    public function setStrategy(int $strategy): self
+    {
+        $this->strategy = $strategy;
+
+        return $this;
+    }
+
+    /**
      * squash
      *
      * Clean & validate the given data according to the definition.
-     *
-     * @see     ParameterJuicerInterface
      */
-    public function squash(
-        array   $values,
-        int     $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES
-    ): array
+    public function squash(array $values): array
     {
-        return $this->validate(
-            $this->getName(),
-            $this->clean($values),
-            $strategy
-        );
+        $values = $this->clean($values);
+        $this->validate($this->getName(), $values);
+
+        return $values;
     }
 
     /**
@@ -172,33 +218,85 @@ class ParameterJuicer implements ParameterJuicerInterface
      *
      * @see     ParameterJuicerInterface
      */
-    public function validate(
-        string $name,
-        array $values,
-        int $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES
-    ): array
+    public function validate(string $name, array $values): ParameterJuicerInterface
     {
         $exception = new ValidationException;
 
-        if ($strategy <> self::STRATEGY_ACCEPT_EXTRA_VALUES) {
-            $values = $this->applyStrategy($exception, $values, $strategy);
+        if ($this->strategy === self::STRATEGY_REFUSE_EXTRA_VALUES) {
+            $this->refuseExtraFields($values, $exception);
+        }
+        $this->validateFields($values, $exception);
+
+        if ($exception->hasExceptions()) {
+            throw $exception;
         }
 
+        return $this;
+    }
+
+    /**
+     * refuseExtraFields
+     *
+     * Fill the exception with refused extra fields if any.
+     */
+    private function refuseExtraFields(array $values, ValidationException $exception): self
+    {
+        $diff = array_keys(array_diff_key($values, $this->fields));
+
+        foreach ($diff as $fied_name) {
+            $exception->addException(new ValidationException(
+                sprintf("Extra field '%s' is refused by validation strategy.", $fied_name)
+            ));
+        }
+
+        return $this;
+    }
+
+    /**
+     * validateFields
+     *
+     * Check mandatory fields and launch validators.
+     */
+    private function validateFields(array $values, ValidationException $exception): self
+    {
         foreach ($this->fields as $field => $is_mandatory) {
-            $is_set = isset($values[$field]);
+            $is_set = isset($values[$field]) || array_key_exists($field, $values);
 
             if ($is_mandatory && !$is_set) {
-                $exception->addMessage(sprintf("Missing field '%s' is mandatory.", $field));
+                $exception->addException(
+                    new ValidationException(
+                        sprintf(
+                            "Missing field '%s' is mandatory.",
+                            $field
+                        )
+                    )
+                );
 
-                continue;
-            }
-
-            if ($is_set && isset($this->validators[$field])) {
-                $this->launchValidatorsFor($field, $values[$field], $strategy, $exception);
+            } elseif ($is_set && isset($this->validators[$field])) {
+                $this->launchValidatorsFor(
+                    $field,
+                    $values[$field],
+                    $exception
+                );
             }
         }
 
-        $this->launchExceptionWhenFail($exception);
+        return $this;
+    }
+
+    /**
+     * setDefaultValues
+     *
+     * Apply default values. When a field is not present in the values, the
+     * default value is set.
+     */
+    private function setDefaultValues(array $values): array
+    {
+        foreach ($this->default_values as $field => $default_value) {
+            if (!isset($values[$field]) && !array_key_exists($field, $values)) {
+                $values[$field] = $default_value;
+            }
+        }
 
         return $values;
     }
@@ -212,61 +310,35 @@ class ParameterJuicer implements ParameterJuicerInterface
      */
     public function clean(array $values): array
     {
+        if ($this->strategy === self::STRATEGY_IGNORE_EXTRA_VALUES) {
+            $values = array_intersect_key($values, $this->fields);
+        }
+
+        return $this->setDefaultValues($this->triggerCleaning($values));
+    }
+
+    /**
+     * triggerCleaning
+     *
+     * Launch cleaners on the values.
+     */
+    private function triggerCleaning(array $values): array
+    {
         foreach ($this->cleaners as $field_name => $cleaners) {
-            if (isset($values[$field_name])) {
+            if (isset($values[$field_name]) || array_key_exists($field_name, $values)) {
                 foreach ($cleaners as $cleaner) {
-                    $values[$field_name] =
-                        call_user_func($cleaner, $values[$field_name]);
+                    try {
+                        $values[$field_name] =
+                            call_user_func($cleaner, $values[$field_name])
+                            ;
+                    } catch (CleanerRemoveFieldException $e) {
+                        unset($values[$field_name]);
+                    }
                 }
             }
         }
 
         return $values;
-    }
-
-    /**
-     * applyStrategy
-     *
-     * Apply extra values strategies.
-     *
-     * @throws RuntimeException if no valid stratgies were provided.
-     */
-    private function applyStrategy(ValidationException $exception, array $values, int $strategy): array
-    {
-        $diff_keys = array_keys(
-            array_diff_key(
-                $values,
-                $this->fields
-            )
-        );
-
-        if (count($diff_keys) === 0 || $strategy === self::STRATEGY_ACCEPT_EXTRA_VALUES) {
-            return $values;
-        }
-
-        if ($strategy === self::STRATEGY_REFUSE_EXTRA_VALUES) {
-            foreach ($diff_keys as $key) {
-                $exception->addMessage(
-                    sprintf(
-                        "Extra field '%s' is present with STRATEGY_REFUSE_EXTRA_VALUES.",
-                        $key
-                    )
-                );
-            }
-
-            return $values;
-        }
-
-        if ($strategy === self::STRATEGY_IGNORE_EXTRA_VALUES) {
-            return array_diff_key($values, array_flip($diff_keys));
-        }
-
-        throw new \RuntimeException(
-            sprintf(
-                "Unknown strategy %d, available strategies are [STRATEGY_IGNORE_EXTRA_VALUES, STRATEGY_ACCEPT_EXTRA_VALUES, STRATEGY_REFUSE_EXTRA_VALUES].",
-                $strategy
-            )
-        );
     }
 
     /**
@@ -292,38 +364,23 @@ class ParameterJuicer implements ParameterJuicerInterface
     }
 
     /**
-     * launchExceptionWhenFail
+     * launchValidatorsFor
      *
-     * Check if the validation exception has messages. If yes, the exception is
-     * thrown.
+     * Triger validators for the given field if any.
+     *
+     * @throws  \RuntimeException if the callable fails.
      */
-    private function launchExceptionWhenFail(ValidationException $exception): self
-    {
-        if ($exception->hasMessages()) {
-            $exception->addMessage(
-                sprintf(
-                    "Validation of set '%s' failed.",
-                    $this->getName()
-                )
-            );
-
-            throw $exception;
-        }
-
-        return $this;
-    }
-
-    private function launchValidatorsFor(string $field, $value, int $strategy, ValidationException $exception): self
+    private function launchValidatorsFor(string $field, $value, ValidationException $exception): self
     {
         foreach ($this->validators[$field] as $validator) {
             try {
-                if (call_user_func($validator, $field, $value, $strategy) === false) {
+                if (call_user_func($validator, $field, $value) === false) {
                     throw new \RuntimeException(
                         sprintf("One of the validators for the field '%s' has a PHP error.", $field)
                     );
                 }
             } catch (ValidationException $e) {
-                $exception->addMessage($e->getMessage());
+                $exception->addException($e);
             }
         }
 
