@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/chanmix51/ParameterJuicer.svg?branch=master)](https://travis-ci.org/chanmix51/ParameterJuicer)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/?branch=master)
-[![Monthly Downloads](https://poser.pugx.org/chanmix51/parameter-juicer/d/monthly.png)](https://packagist.org/packages/chanmix51/parameter-juicer) [![License](https://poser.pugx.org/chanmix51/parameter-juicer/license.svg)](https://packagist.org/packages/chanmix51/parameter-juicer)
+[![License](https://poser.pugx.org/chanmix51/parameter-juicer/license.svg)](https://packagist.org/packages/chanmix51/parameter-juicer)
 
 How to extract the juice from your parameters, CSV, forms etc. data. This is a
 simple parser, validator and cleaner for data.
@@ -46,14 +46,19 @@ validates the data according to the given definition.
             ->setStrategy(Juicer::STRATEGY_IGNORE_EXTRA_VALUES)
             ;            // ↑ extra values are removed
 
-            // throw a ValidationException because "chu" is mandatory
-            $juicer->squash(['pika' => '3', 'whatever' => 'a']);
 
-            // return ["pika" => 9, "chu" => '']
-            $juicer->squash(['chu' => null, 'whatever' => 'a']);
+            try {
+                // ↓ return ["pika" => 9, "chu" => '']
+                $juicer->squash(['chu' => null, 'whatever' => 'a']);
 
-            // return ["pika" => 3, "chu" => ""]
-            $juicer->squash(['pika' => '3', 'chu' => '', 'whatever' => 'a']);
+                // ↓ return ["pika" => 3, "chu" => "a"]
+                $juicer->squash(['pika' => '3', 'chu' => ' a ', 'whatever' => 'a']);
+
+                // ↓ throw a ValidationException because "chu" is mandatory
+                $juicer->squash(['pika' => '3', 'whatever' => 'a']);
+            } catch (ValidationException $e) {
+                // manage failed validation
+            }
 ```
 
 ### Extra fields strategies
@@ -165,16 +170,38 @@ Validators just indicate if the data respect the validation rules or not. When r
 ```php
 $validator = function($field_name, $value) {
     if (!preg_match("/pika/", $value)) {
-        throw new ValidationException(
-            sprintf(
-                "Field '%s' must NOT contain 'pika'.",
-                $field_name
-                )
-            );
+        throw new ValidationException("must NOT contain 'pika'.");
     }
 }
 ```
 
+## Validation exception
+
+A juicer either produces clean values or a `ValidationException` in case of the validation fails. The `ValidationException` can store an nest exceptions. Every time a validation condition fail (mandatory field, extra field strategy or validator), it adds a `ValidationException` in a global exception. It is necessary to catch this exception to make it possible either to fetch the stored exception or to directly fetch the errors:
+
+```php
+try {
+    $my_juicer->squash($data);
+} catch (ValidationException $e) {
+    printf($e); // ← call $e->getFancyMessage()
+}
+```
+Assuming a set `my_data` is nesting a field `pikachu` the output is like the following:
+
+```
+validation failed
+  [pikachu] - validation failed
+      [pika] - must not be empty.
+      [chu] - missing mandatory field.
+  [me] - must be strictly positive (-1 given).
+```
+
+The `getExceptions()` method returns an array of the validation errors indexed by field name, values are arrays of `ValidationException`:
+
+```php
+foreach ($exception->getExceptions() as $field_name => $exceptions) {
+    printf("Field '%s' as %d errors.\n", $field_name, count($exceptions));
+}
 
 ## How to contribute
 

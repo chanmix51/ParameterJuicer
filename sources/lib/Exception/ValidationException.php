@@ -31,14 +31,9 @@ class ValidationException extends ParameterJuicerException
      *
      * Add a new message to the exception.
      */
-    public function addException(ValidationException $exception): self
+    public function addException(string $field, ValidationException $exception): self
     {
-        $this->exceptions[] = $exception;
-        $this->message = sprintf(
-            "%s\n%s",
-            $this->message,
-            $exception->getMessage()
-        );
+        $this->exceptions[$field][] = $exception;
 
         return $this;
     }
@@ -64,17 +59,54 @@ class ValidationException extends ParameterJuicerException
     }
 
     /**
-     * getMessages
+     * getFancyMessage
      *
-     * Return an array of the embeded exceptions’ messages.
+     * Output a nicely formatted validation error messages.
      */
-    public function getMessages(): array
+    public function getFancyMessage(): string
     {
-        return array_map(
-            $this->exceptions,
-            function(\Exception $e) {
-                return $e->getMessage();
+        return sprintf("%s\n", $this->getMessage()) . $this->getSubFancyMessage();
+    }
+
+    /**
+     * getSubFancyMessage
+     *
+     * Subrouting to display validation errors.
+     */
+    public function getSubFancyMessage(int $level = 0): string
+    {
+        $output = '';
+
+        foreach ($this->exceptions as $field => $exceptions) {
+            $output .= sprintf(
+                "%s[%s] - %s\n",
+                str_repeat(' ', $level * 4 + 2),
+                $field,
+                join(
+                    ' | ',
+                    array_map(
+                        function(ValidationException $e) { return $e->getMessage(); },
+                        $exceptions
+                    )
+                )
+            );
+            foreach ($exceptions as $exception) {
+                if ($exception->hasExceptions()) {
+                    $output .= $exception->getSubFancyMessage($level + 1);
+                }
             }
-        );
+        }
+
+        return $output;
+    }
+
+    /**
+     * __toString
+     *
+     * String representation of this exception.
+     */
+    public function __toString(): string
+    {
+        return $this->getFancyMessage();
     }
 }

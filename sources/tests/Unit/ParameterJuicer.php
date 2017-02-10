@@ -130,7 +130,6 @@ class ParameterJuicer extends Atoum
             ->assert("Checking validation with missing mandatory data.")
                 ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains("Missing field")
             ;
     }
 
@@ -176,17 +175,14 @@ class ParameterJuicer extends Atoum
             ->given($data['pika'] = 19)
                 ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains('must be between 1 and 10')
             ->assert("Checking validation with some wrong mandatory data (2/3).")
             ->given($data['pika'] = 'chu')
                 ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains('must be an integer')
             ->assert("Checking validation with some wrong mandatory data (3/3).")
             ->given($data['pika'] = null)
                 ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains('must be an integer')
             ;
             ;
     }
@@ -219,7 +215,6 @@ class ParameterJuicer extends Atoum
             ->assert('A field in the set with no value must not trigger default value.')
                 ->exception(function() use ($juicer) { $juicer->squash(['pika' => null]); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains("Field 'pika' must not be empty.")
             ->assert('A field not set must get a default value.')
                 ->array($juicer->squash([]))
                     ->isEqualTo(['pika' => 'chu'])
@@ -292,7 +287,6 @@ class ParameterJuicer extends Atoum
             ->given($data = ['pika' => '   '])
                 ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains("Field 'pika' is an empty string.")
             ;
     }
 
@@ -364,11 +358,17 @@ class ParameterJuicer extends Atoum
                 return $v;
             })
             ->setDefaultValue('pika', 'default value')
-            ->addValidator('pika', function($k, $v) { if (strlen(trim($v)) === 0) throw new InvalidArgumentException; })
+            ->addValidator(
+                'pika',
+                function($k, $v) { if (strlen(trim($v)) === 0) throw new InvalidArgumentException; }
+        )
             ->addField('chu')
-            ->addCleaner('chu', function($v) { $v = (int) $v; if ($v === 5) throw new CleanerRemoveFieldException; return $v; })
+            ->addCleaner(
+                'chu',
+                function($v) { $v = (int) $v; if ($v === 5) throw new CleanerRemoveFieldException; return $v; }
+                )
             ;
-        $this
+        $e = $this
             ->assert('Testing the juicer workflow.')
             ->given($data = ['pika' => ' - - ', 'chu' => 0])
                 ->array($juicer->squash($data))
@@ -376,7 +376,12 @@ class ParameterJuicer extends Atoum
             ->given($data = ['pika' => 'whatever', 'chu' => 5])
                 ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
-                    ->message->contains("Missing field 'chu' is mandatory.")
+                    ->getValue()
                 ;
+        $this
+            ->given($exception = $e->getExceptions()['chu'][0])
+            ->exception($exception)->message->contains('missing mandatory field')
+            ;
+
     }
 }

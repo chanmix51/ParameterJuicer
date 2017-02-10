@@ -63,7 +63,7 @@ class ParameterJuicer implements ParameterJuicerInterface
      */
     public function getName(): string
     {
-        return 'anonymous';
+        return 'data';
     }
 
     /**
@@ -220,7 +220,7 @@ class ParameterJuicer implements ParameterJuicerInterface
      */
     public function validate(string $name, array $values): ParameterJuicerInterface
     {
-        $exception = new ValidationException;
+        $exception = new ValidationException("validation failed");
 
         if ($this->strategy === self::STRATEGY_REFUSE_EXTRA_VALUES) {
             $this->refuseExtraFields($values, $exception);
@@ -243,10 +243,11 @@ class ParameterJuicer implements ParameterJuicerInterface
     {
         $diff = array_keys(array_diff_key($values, $this->fields));
 
-        foreach ($diff as $fied_name) {
-            $exception->addException(new ValidationException(
-                sprintf("Extra field '%s' is refused by validation strategy.", $fied_name)
-            ));
+        foreach ($diff as $field_name) {
+            $exception->addException(
+                $field_name,
+                new ValidationException("extra field is refused by validation strategy")
+            );
         }
 
         return $this;
@@ -264,12 +265,8 @@ class ParameterJuicer implements ParameterJuicerInterface
 
             if ($is_mandatory && !$is_set) {
                 $exception->addException(
-                    new ValidationException(
-                        sprintf(
-                            "Missing field '%s' is mandatory.",
-                            $field
-                        )
-                    )
+                    $field,
+                    new ValidationException("missing mandatory field")
                 );
 
             } elseif ($is_set && isset($this->validators[$field])) {
@@ -380,7 +377,7 @@ class ParameterJuicer implements ParameterJuicerInterface
                     );
                 }
             } catch (ValidationException $e) {
-                $exception->addException($e);
+                $exception->addException($field, $e);
             }
         }
 
