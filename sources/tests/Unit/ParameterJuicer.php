@@ -10,6 +10,7 @@
 namespace Chanmix51\ParameterJuicer\Tests\Unit;
 
 use Chanmix51\ParameterJuicer\Exception\ValidationException;
+use Chanmix51\ParameterJuicer\Exception\CleanerRemoveFieldException;
 use Chanmix51\ParameterJuicer\Tests\Fixtures\PokemonJuicer;
 use Chanmix51\ParameterJuicer\Tests\Fixtures\PikaChuJuicer;
 
@@ -343,5 +344,39 @@ class ParameterJuicer extends Atoum
                     ['pokemon_id' => 1, 'pika_chu' => ['pika' => 'aaa', 'chu' => 2]]
                 )
             ;
+    }
+
+    /**
+     * testCleanerAndValidatorWorkflow
+     *
+     * This tests that the order is the following:
+     * 1 - clean
+     * 2 - apply default value
+     * 3 - validate
+     */
+    public function testCleanerAndValidatorWorkflow()
+    {
+        $juicer = $this->newTestedInstance()
+            ->addField('pika')
+            ->addCleaner('pika', function($v) {
+                $v = preg_replace('/[^\w]+/', '', strtolower(trim($v)));
+                if ($v === '') throw new CleanerRemoveFieldException;
+                return $v;
+            })
+            ->setDefaultValue('pika', 'default value')
+            ->addValidator('pika', function($k, $v) { if (strlen(trim($v)) === 0) throw new InvalidArgumentException; })
+            ->addField('chu')
+            ->addCleaner('chu', function($v) { $v = (int) $v; if ($v === 5) throw new CleanerRemoveFieldException; return $v; })
+            ;
+        $this
+            ->assert('Testing the juicer workflow.')
+            ->given($data = ['pika' => ' - - ', 'chu' => 0])
+                ->array($juicer->squash($data))
+                    ->isEqualTo(['pika' => 'default value', 'chu' => 0])
+            ->given($data = ['pika' => 'whatever', 'chu' => 5])
+                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                    ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
+                    ->message->contains("Missing field 'chu' is mandatory.")
+                ;
     }
 }

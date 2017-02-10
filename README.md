@@ -80,6 +80,7 @@ class PikaChuJuicer extends ParameterJuicer
             ->addField('chu', false)
                 ->addCleaner('chu', function($v) { return $v + 0; })
                 ->addValidator('chu', [$this, 'mustBeANumberStrictlyPositive'])
+            ->setStrategy(ParameterJuicer::STRATEGY_REFUSE_EXTRA_VALUES)
         ;
     }
 
@@ -115,7 +116,7 @@ class PikaChuJuicer extends ParameterJuicer
 }
 
 $trusted_data = (new PikaChuJuicer)
-    ->squash($untrusted_data, Juicer::STRATEGY_REFUSE_EXTRA_VALUES)
+    ->squash($untrusted_data)
     ;
 ```
 
@@ -129,10 +130,51 @@ It may happen a dataset embeds in a field another dataset that already has its o
 $juicer = (new Juicer)
     ->addField('pokemon_id')
     ->addField('pika_chu')
-        ->addJuicer('pika_chu', new PikaChuJuicer)
-        ->addValidator('pika_chu', … // add an extra validator on this field)
+        ->addJuicer(
+            'pika_chu',                      // ↓ change this juicer’s strategy
+            (new PikaChuJuicer)->setStrategy(Juicer::STRATEGY_IGNORE_EXTRA_VALUES)
+            )
+        ->addValidator('pika_chu', … // ← add an extra validator on this field)
     ;
 ```
+
+## Writing cleaners and validators.
+
+### Cleaners
+
+Cleaners and validators can be everything callable. They have different purpose, the cleaners *transform* the data prior to validation. The validation *indicates* if the data is valid or not. Cleaners must return the value or throw a `CleanerRemoveFieldException` if the field is to be removed.
+
+```php
+$cleaner = function($value) {
+    $value = trim($value);
+
+    if ($value === '') {
+        throw new CleanerRemoveFieldException;
+    }
+
+    return $value;
+}
+```
+
+In the example above, null or empty strings discard the field so a default value can be applied if set. If the field is unset with no default value and is mandatory, this will raise a validation exception in the end (see Validators below).
+
+### Validators
+
+Validators just indicate if the data respect the validation rules or not. When rules are not respected by a value, a `ValidationException` is thrown. This exception is collected by the juicer and all the values are validated. At the end of the process, if exceptions have been collected, they are all grouped in the same `ValidationException` instance which is then thrown so users get all the validation messages at once.
+
+```php
+$validator = function($field_name, $value) {
+    if (!preg_match("/pika/", $value)) {
+        throw new ValidationException(
+            sprintf(
+                "Field '%s' must NOT contain 'pika'.",
+                $field_name
+                )
+            );
+    }
+}
+```
+
 
 ## How to contribute
 
