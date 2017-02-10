@@ -23,7 +23,7 @@ namespace Chanmix51\ParameterJuicer\Exception;
  */
 class ValidationException extends ParameterJuicerException
 {
-    /** @var  bool  Indicate if messages have been set in the current exception.*/
+    /** @var  array contains all the set’s exceptions */
     private $exceptions = [];
 
     /**
