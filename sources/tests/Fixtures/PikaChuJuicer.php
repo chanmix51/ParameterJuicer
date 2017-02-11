@@ -35,7 +35,7 @@ class PikaChuJuicer extends Juicer
         return strtolower(trim($value));
     }
 
-    protected function mustNotBeEmptyString($name, $value)
+    protected function mustNotBeEmptyString($value)
     {
         if (strlen($value) === 0) {
             throw new ValidationException(
@@ -47,7 +47,7 @@ class PikaChuJuicer extends Juicer
         }
     }
 
-    protected function mustBeANumberStrictlyPositive($name, $value)
+    protected function mustBeANumberStrictlyPositive($value)
     {
         if ($value <= 0) {
             throw new ValidationException(

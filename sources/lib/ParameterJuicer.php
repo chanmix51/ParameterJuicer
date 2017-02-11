@@ -57,16 +57,6 @@ class ParameterJuicer implements ParameterJuicerInterface
     public    $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES;
 
     /**
-     * getName
-     *
-     * @see     ParameterJuicerInterface
-     */
-    public function getName(): string
-    {
-        return 'data';
-    }
-
-    /**
      * addField
      *
      * Declare a new field with no validators nor cleaner. It can be declared
@@ -206,7 +196,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     public function squash(array $values): array
     {
         $values = $this->clean($values);
-        $this->validate($this->getName(), $values);
+        $this->validate($values);
 
         return $values;
     }
@@ -218,7 +208,7 @@ class ParameterJuicer implements ParameterJuicerInterface
      *
      * @see     ParameterJuicerInterface
      */
-    public function validate(string $name, array $values): ParameterJuicerInterface
+    public function validate(array $values): ParameterJuicerInterface
     {
         $exception = new ValidationException("validation failed");
 
@@ -371,7 +361,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     {
         foreach ($this->validators[$field] as $validator) {
             try {
-                if (call_user_func($validator, $field, $value) === false) {
+                if (call_user_func($validator, $value) === false) {
                     throw new \RuntimeException(
                         sprintf("One of the validators for the field '%s' has a PHP error.", $field)
                     );

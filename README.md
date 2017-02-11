@@ -23,7 +23,7 @@ validates the data according to the given definition.
         use Chanmix51\ParameterJuicer\Exception\ValidationException;
 
         $turn_to_integer = function($v):int { return (int) $v; };
-        $must_be_between_1_and_10 = function(string $field, int $value) {
+        $must_be_between_1_and_10 = function(int $value) {
             if (10 < $value || 1 > $value) {
                 throw new ValidationException(
                     sprintf(
@@ -75,17 +75,6 @@ It is possible to embed cleaning & validation rules in a dedicated class:
 ```php
 class PikaChuJuicer extends ParameterJuicer
 {
-    /**
-     * getName
-     *
-     * This is the name of the data type. It is output in the validation
-     * errors.
-     */
-    public function getName(): string
-    {
-        return 'field_type';
-    }
-
     public function __construct()
     {
         $this
@@ -104,14 +93,14 @@ class PikaChuJuicer extends ParameterJuicer
         return strtolower(trim($value));
     }
 
-    public function mustNotBeEmptyString($name, $value)
+    public function mustNotBeEmptyString($value)
     {
         if (strlen($value) === 0) {
             throw new ValidationException("must no be an empty string");
         }
     }
 
-    public function mustBeANumberStrictlyPositive($name, $value)
+    public function mustBeANumberStrictlyPositive($value)
     {
         if ($value <= 0) {
             throw new ValidationException(
@@ -129,7 +118,7 @@ $trusted_data = (new PikaChuJuicer)
     ;
 ```
 
-This is particularly useful because it makes cleaners and validators to be unit-testable in addition to the juicer being usable in different portions of the code. The `ParameterJuicer` class is named `data` so by default all children class will be named the same. It is advised to set a dedicated name for each juicer class. The name represents the data type being validated and is output in the validation error messages.
+This is particularly useful because it makes cleaners and validators to be unit-testable in addition to the juicer being usable in different portions of the code.
 
 ### Using a juicer class to clean & validate nested data.
 
@@ -172,12 +161,14 @@ In the example above, null or empty strings discard the field so a default value
 Validators just indicate if the data respect the validation rules or not. When rules are not respected by a value, a `ValidationException` is thrown. This exception is collected by the juicer and all the values are validated. At the end of the process, if exceptions have been collected, they are all grouped in the same `ValidationException` instance which is then thrown so users get all the validation messages at once.
 
 ```php
-$validator = function($field_name, $value) {
+$validator = function($value) {
     if (!preg_match("/pika/", $value)) {
-        throw new ValidationException("must NOT contain 'pika'.");
+        throw new ValidationException("must NOT contain 'pika'");
     }
 }
 ```
+
+The Juicer automatically cares about associating validation errors with field names, this name is prepend to the validation error message. Validation error message are kept short, with no starting uppercase and no final dot.
 
 ## Validation exception
 
@@ -190,14 +181,14 @@ try {
     printf($e); // ← this calls $e->getFancyMessage()
 }
 ```
-Assuming a set `my_data` is nesting a field `pikachu` the output is like the following:
+Assuming a set is nesting a juicer in a field `pikachu` the output would be like the following:
 
 ```
 validation failed
   [pikachu] - validation failed
-      [pika] - must not be empty.
-      [chu] - missing mandatory field.
-  [me] - must be strictly positive (-1 given).
+      [pika] - must not be empty
+      [chu] - missing mandatory field
+  [me] - must be strictly positive (-1 given)
 ```
 
 The `getExceptions()` method returns an array of the validation errors indexed by field name, values are arrays of `ValidationException`:

@@ -123,7 +123,7 @@ class ParameterJuicer extends Atoum
     {
         $juicer = $this->newTestedInstance()
             ->addField('pika')
-            ->addValidator('pika', function($k, $v) { })
+            ->addValidator('pika', function($v) { })
             ->addField('chu')
             ;
         $this
@@ -140,20 +140,18 @@ class ParameterJuicer extends Atoum
      */
     public function testMandatoryFieldValidation()
     {
-        $validate_int = function($k, $v) {
+        $validate_int = function($v) {
             if (!is_int($v)) throw new ValidationException(
                 sprintf(
-                    "Field '%s' must be an integer ('%s' detected).",
-                    $k,
+                    "must be an integer ('%s' detected)",
                     gettype($v)
                 )
             );
         };
-        $validate_range = function($k, $v) {
+        $validate_range = function($v) {
             if (10 < $v || 1 > $v) throw new ValidationException(
                 sprintf(
-                    "Field '%s' must be between 1 and 10 (%d given).",
-                    $k,
+                    "must be between 1 and 10 (%d given)",
                     $v
                 )
             );
@@ -200,14 +198,9 @@ class ParameterJuicer extends Atoum
             ->addField('pika')
                 ->setDefaultValue('pika', 'chu')
                 ->addCleaner('pika', function($v) { return trim($v); })
-                ->addValidator('pika', function($k, $v) {
+                ->addValidator('pika', function($v) {
                     if (strlen($v) === 0)
-                        throw new ValidationException(
-                            sprintf(
-                                "Field '%s' must not be empty.",
-                                $k
-                            )
-                        );
+                        throw new ValidationException("must not be empty");
                 })
             ;
 
@@ -273,11 +266,9 @@ class ParameterJuicer extends Atoum
         $juicer = $this->newTestedInstance()
             ->addField('pika')
             ->addCleaner('pika', function($v) { return trim($v); })
-            ->addValidator('pika', function($k, $v) {
+            ->addValidator('pika', function($v) {
                 if (strlen($v) === 0) {
-                    throw new ValidationException(
-                        sprintf("Field '%s' is an empty string.", $k)
-                    );
+                    throw new ValidationException("is an empty string.");
                 }
             })
         ;
@@ -360,14 +351,21 @@ class ParameterJuicer extends Atoum
             ->setDefaultValue('pika', 'default value')
             ->addValidator(
                 'pika',
-                function($k, $v) { if (strlen(trim($v)) === 0) throw new InvalidArgumentException; }
+                function($v) { if (strlen(trim($v)) === 0)
+                    throw new ValidationException('can not be white string');
+                }
         )
             ->addField('chu')
             ->addCleaner(
                 'chu',
-                function($v) { $v = (int) $v; if ($v === 5) throw new CleanerRemoveFieldException; return $v; }
-                )
-            ;
+                function($v) {
+                    $v = (int) $v;
+                    if ($v === 5)
+                        throw new CleanerRemoveFieldException;
+                    return $v;
+                }
+            )
+        ;
         $e = $this
             ->assert('Testing the juicer workflow.')
             ->given($data = ['pika' => ' - - ', 'chu' => 0])
@@ -382,6 +380,5 @@ class ParameterJuicer extends Atoum
             ->given($exception = $e->getExceptions()['chu'][0])
             ->exception($exception)->message->contains('missing mandatory field')
             ;
-
     }
 }
