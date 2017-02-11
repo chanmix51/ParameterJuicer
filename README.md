@@ -197,6 +197,7 @@ The `getExceptions()` method returns an array of the validation errors indexed b
 foreach ($exception->getExceptions() as $field_name => $exceptions) {
     printf("Field '%s' as %d errors.\n", $field_name, count($exceptions));
 }
+```
 
 ## How to contribute
 
