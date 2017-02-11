@@ -79,7 +79,7 @@ class PikaChuJuicer extends ParameterJuicer
      * getName
      *
      * This is the name of the data type. It is output in the validation
-       errors.
+     * errors.
      */
     public function getName(): string
     {
@@ -129,7 +129,7 @@ $trusted_data = (new PikaChuJuicer)
     ;
 ```
 
-This is particularly useful because it makes cleaners and validators to be unit-testable in addition to the juicer being usable in different portions of the code.
+This is particularly useful because it makes cleaners and validators to be unit-testable in addition to the juicer being usable in different portions of the code. The `ParameterJuicer` class is named `data` so by default all children class will be named the same. It is advised to set a dedicated name for each juicer class. The name represents the data type being validated and is output in the validation error messages.
 
 ### Using a juicer class to clean & validate nested data.
 
