@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "4efae7a39332b7094c354fd389e9ff33",
-    "content-hash": "364101f40c116eca7aee288b3c6d8364",
+    "hash": "e262ea663557e16d05ba532596b58143",
+    "content-hash": "a9927f2ebfc68b07289cf784c487b270",
     "packages": [],
     "packages-dev": [
         {
@@ -14,12 +14,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/atoum/atoum.git",
-                "reference": "4e384b975611353638ed71a6e8246099bc9044e9"
+                "reference": "834e7c8fdaf23cc864a11dc1b6f2da71c5a038cc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/atoum/atoum/zipball/4e384b975611353638ed71a6e8246099bc9044e9",
-                "reference": "4e384b975611353638ed71a6e8246099bc9044e9",
+                "url": "https://api.github.com/repos/atoum/atoum/zipball/834e7c8fdaf23cc864a11dc1b6f2da71c5a038cc",
+                "reference": "834e7c8fdaf23cc864a11dc1b6f2da71c5a038cc",
                 "shasum": ""
             },
             "require": {
@@ -86,7 +86,7 @@
                 "test",
                 "unit testing"
             ],
-            "time": "2017-01-19 16:21:46"
+            "time": "2017-02-11 13:23:46"
         }
     ],
     "aliases": [],
