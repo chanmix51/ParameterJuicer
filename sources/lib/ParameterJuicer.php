@@ -287,7 +287,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     {
         foreach ($this->default_values as $field => $default_value) {
             if (!isset($values[$field]) && !array_key_exists($field, $values)) {
-                $values[$field] = $default_value();
+                $values[$field] = call_user_func($default_value);
             }
         }
 
