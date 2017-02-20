@@ -43,9 +43,9 @@ class ValidationException extends ParameterJuicerException
      *
      * Indicates if yes or no some exceptions have been set.
      */
-    public function hasExceptions(): int
+    public function hasExceptions(): bool
     {
-        return (bool) (count($this->exceptions) > 0);
+        return count($this->exceptions) > 0;
     }
 
     /**
