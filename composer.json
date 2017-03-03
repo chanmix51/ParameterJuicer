@@ -9,7 +9,7 @@
         "php": ">=7.0"
     },
     "require-dev": {
-        "atoum/atoum" : "dev-master"
+        "atoum/atoum": "~3.0.0"
     },
     "autoload": {
         "psr-4": {
@@ -29,4 +29,3 @@
     }
 
 }
-
