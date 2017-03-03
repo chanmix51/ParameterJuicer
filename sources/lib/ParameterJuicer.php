@@ -153,6 +153,12 @@ class ParameterJuicer implements ParameterJuicerInterface
      */
     public function setDefaultValue(string $name, $value): self
     {
+        if (false === is_callable($value)) {
+            $value = function () use ($value) {
+                return $value;
+            };
+        }
+
         $this
             ->checkFieldExists($name)
             ->default_values[$name] = $value
@@ -281,7 +287,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     {
         foreach ($this->default_values as $field => $default_value) {
             if (!isset($values[$field]) && !array_key_exists($field, $values)) {
-                $values[$field] = $default_value;
+                $values[$field] = call_user_func($default_value);
             }
         }
 

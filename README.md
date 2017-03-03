@@ -41,6 +41,8 @@ validates the data according to the given definition.
                 ->setDefaultValue('pika', 9) // ← when not set
             ->addField('chu')
                 ->addCleaner('chu', function($v) { return trim($v); })
+                ->setDefaultValue('chu', function() { return 10; })
+                        // ↑ use a callable to have a lazy loaded default value
             ->addField('not mandatory', false)   // ← not mandatory
             ->setStrategy(Juicer::STRATEGY_IGNORE_EXTRA_VALUES)
             ;            // ↑ extra values are removed

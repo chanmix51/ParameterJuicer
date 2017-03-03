@@ -223,7 +223,7 @@ class ParameterJuicer extends Atoum
     {
         $this
             ->assert('A mandatory field with a default value is OK when not provided.')
-            ->given($juicer = $this->newTestedInstance()->addField('pika')->setDefaultValue('pika', 'chu'))
+            ->given($juicer = $this->newTestedInstance()->addField('pika')->setDefaultValue('pika', function() { return 'chu'; }))
                 ->array($juicer->squash([]))
                     ->isEqualTo(['pika' => 'chu'])
             ->assert('Default value does not apply when field is set.')
@@ -233,6 +233,10 @@ class ParameterJuicer extends Atoum
             ->given($juicer->addCleaner('pika', function($v) { $v = trim($v); return strlen($v) === 0 ? null : $v; }))
                 ->array($juicer->squash(['pika' => '   ']))
                     ->isEqualTo(['pika' => null])
+            ->assert('Default value can not be a callable')
+            ->given($juicer->setDefaultValue('pika', 'chuu'))
+                ->array($juicer->squash([]))
+                    ->isEqualTo(['pika' => 'chuu'])
             ;
     }
 
