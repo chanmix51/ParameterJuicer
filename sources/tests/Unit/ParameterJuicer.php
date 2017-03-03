@@ -9,6 +9,8 @@
  */
 namespace Chanmix51\ParameterJuicer\Tests\Unit;
 
+use Chanmix51\ParameterJuicer\ParameterJuicer as Juicer;
+
 use Chanmix51\ParameterJuicer\Exception\ValidationException;
 use Chanmix51\ParameterJuicer\Exception\CleanerRemoveFieldException;
 use Chanmix51\ParameterJuicer\Tests\Fixtures\PokemonJuicer;
@@ -38,7 +40,7 @@ class ParameterJuicer extends Atoum
     public function testEmptyValidationWithAcceptStrategy()
     {
         $juicer = ($this->newTestedInstance())
-            ->setStrategy(2)
+            ->setStrategy(Juicer::STRATEGY_ACCEPT_EXTRA_VALUES)
             ;
         $this
             ->assert("Testing an empty validator & values and STRATEGY_ACCEPT_EXTRA_VALUES.")
@@ -60,7 +62,7 @@ class ParameterJuicer extends Atoum
     public function testEmptyValidationWithIgnoreStrategy()
     {
         $juicer = ($this->newTestedInstance())
-            ->setStrategy(0)
+            ->setStrategy(Juicer::STRATEGY_IGNORE_EXTRA_VALUES)
             ;
         $this
             ->assert("Testing an empty validator and STRATEGY_IGNORE_EXTRA_VALUES.")
@@ -84,7 +86,7 @@ class ParameterJuicer extends Atoum
     public function testEmptyValidationWithRefuseStrategy()
     {
         $juicer = ($this->newTestedInstance())
-            ->setStrategy(1)
+            ->setStrategy(Juicer::STRATEGY_REFUSE_EXTRA_VALUES)
             ;
         $this
             ->assert("Testing an empty validator & values and STRATEGY_REFUSE_EXTRA_VALUES.")
@@ -162,7 +164,7 @@ class ParameterJuicer extends Atoum
             ->addValidator('pika', $validate_range)
             ->addField('chu')
             ->addField('not mandatory', false)
-            ->setStrategy(1)
+            ->setStrategy(Juicer::STRATEGY_REFUSE_EXTRA_VALUES)
             ;
         $this
             ->assert("Checking validation with all mandatory data.")
@@ -289,10 +291,9 @@ class ParameterJuicer extends Atoum
     public function provideCompleteUseThatPass(): array
     {
         return [
-            [['pika' => ' Ah ah!'], 2, ['pika' => 'ah ah!']],
-            [['pika' => ' b  b   ', 'chu' => '3.141596'], 2, ['pika' => 'b b', 'chu' => 3.141596]],
-            [['pika' => 'cCc', 'extra' => 'oï'], 0, ['pika' => 'ccc', 'extra' => 'oï']],
-            [['pika' => 'cCc', 'extra' => 'oï'], 1, ['pika' => 'ccc']],
+            [['pika' => ' Ah ah!'], Juicer::STRATEGY_ACCEPT_EXTRA_VALUES, ['pika' => 'ah ah!']],
+            [['pika' => ' b  b   ', 'chu' => '3.141596'], Juicer::STRATEGY_ACCEPT_EXTRA_VALUES, ['pika' => 'b  b', 'chu' => 3.141596]],
+            [['pika' => 'cCc', 'extra' => 'oï'], Juicer::STRATEGY_IGNORE_EXTRA_VALUES, ['pika' => 'ccc']]
         ];
     }
 
@@ -302,7 +303,7 @@ class ParameterJuicer extends Atoum
      * More complex scenarios that pass.
      * @dataProvider provideCompleteUseThatPass
      */
-    public function completeUseThatPass(array $input, int $strategy, array $expected)
+    public function testCompleteUseThatPass(array $input, int $strategy, array $expected)
     {
         $this
             ->assert("Ignoring extra fields with cleaning & validation.")
