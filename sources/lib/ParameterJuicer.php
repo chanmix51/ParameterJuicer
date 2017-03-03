@@ -154,7 +154,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     public function setDefaultValue(string $name, $value): self
     {
         if (false === is_callable($value)) {
-            $value = function () use ($value) {
+            $value = function() use ($value) {
                 return $value;
             };
         }
