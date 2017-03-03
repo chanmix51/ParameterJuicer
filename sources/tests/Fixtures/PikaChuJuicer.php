@@ -39,7 +39,7 @@ class PikaChuJuicer extends Juicer
     protected function mustNotBeEmptyString($value)
     {
         if (strlen($value) === 0) {
-            throw new ValidationException("Field 'pika' is an empty string.");
+            throw new ValidationException("cannot be empty.");
         }
     }
 
@@ -48,7 +48,7 @@ class PikaChuJuicer extends Juicer
         if ($value <= 0) {
             throw new ValidationException(
                 sprintf(
-                    "Field chu must be strictly positive (%f given).",
+                    "must be strictly positive (%f given).",
                     $value
                 )
             );
