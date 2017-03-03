@@ -9,6 +9,7 @@
  */
 namespace Chanmix51\ParameterJuicer\Tests\Fixtures;
 
+use Chanmix51\ParameterJuicer\Exception\ValidationException;
 use Chanmix51\ParameterJuicer\ParameterJuicer as Juicer;
 
 /**

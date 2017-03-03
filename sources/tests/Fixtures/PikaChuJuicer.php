@@ -9,6 +9,7 @@
  */
 namespace Chanmix51\ParameterJuicer\Tests\Fixtures;
 
+use Chanmix51\ParameterJuicer\Exception\ValidationException;
 use Chanmix51\ParameterJuicer\ParameterJuicer as Juicer;
 
 class PikaChuJuicer extends Juicer
@@ -38,12 +39,7 @@ class PikaChuJuicer extends Juicer
     protected function mustNotBeEmptyString($value)
     {
         if (strlen($value) === 0) {
-            throw new ValidationException(
-                sprintf(
-                    "Field '%s' is an empty string.",
-                    $name
-                )
-            );
+            throw new ValidationException("Field 'pika' is an empty string.");
         }
     }
 
@@ -52,8 +48,7 @@ class PikaChuJuicer extends Juicer
         if ($value <= 0) {
             throw new ValidationException(
                 sprintf(
-                    "Field '%s' must be strictly positive (%f given).",
-                    $name,
+                    "Field chu must be strictly positive (%f given).",
                     $value
                 )
             );
