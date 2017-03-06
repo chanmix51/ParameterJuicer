@@ -4,8 +4,39 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/?branch=master)
 [![License](https://poser.pugx.org/chanmix51/parameter-juicer/license.svg)](https://packagist.org/packages/chanmix51/parameter-juicer)
 
-How to extract the juice from your parameters, CSV, forms etc. data. This is a
-simple parser, validator and cleaner for data.
+How to extract the juice from your parameters, CSV, forms etc. data.
+ParameterJuicer is a simple data validator and cleaner for PHP 7.x extensively
+unit tested.
+
+It features:
+- cleaners and validators as anonymous functions
+- default values can be scalars or anonymous functions
+- extra field strategies
+- one pass validation errors collection
+
+Simple example:
+```php
+$juicer = (new ParameterJuicer)
+    ->addField('a_string')
+        ->addCleaner('a_string', function($v) { return trim(strtolower($v)); })
+        ->addValidator('a_string', function($v) {
+            if (strlen($v) === 0) {
+                throw new ValidationException('cannot be empty');
+                }
+            }
+        );
+try {
+    $juicer->squash(['a_string' => ' Pika Chu ']);
+    // ↑ returns ['a_string' => 'pika chu']
+
+    $juicer->squash(['a_string' => '   ']);
+    // ↑ throws a ValidationException
+} catch (ValidationException $e) {
+    printf($e);
+    // ↑ Validation failed
+    // [a_string] - cannot be empty
+}
+```
 
 ## Install
 
