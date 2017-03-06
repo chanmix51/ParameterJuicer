@@ -9,12 +9,12 @@ ParameterJuicer is a simple data validator and cleaner for PHP 7.x extensively
 unit tested.
 
 It features:
-- cleaners and validators as anonymous functions
-- default values can be scalars or anonymous functions
+- cleaners and validators are any callable
+- default values can be scalars or callable
 - extra field strategies
 - one pass validation errors collection
 
-Simple example:
+Simple example of an anonymous juicer:
 ```php
 $juicer = (new ParameterJuicer)
     ->addField('a_string')
@@ -26,7 +26,7 @@ $juicer = (new ParameterJuicer)
             }
         );
 try {
-    $juicer->squash(['a_string' => ' Pika Chu ']);
+    $juicer->squash(['a_string' => ' Pika CHU ']);
     // ↑ returns ['a_string' => 'pika chu']
 
     $juicer->squash(['a_string' => '   ']);
@@ -37,6 +37,8 @@ try {
     // [a_string] - cannot be empty
 }
 ```
+
+It is possible to create dedicated classes to validate and clean structures with embedded structures (see below).
 
 ## Install
 
@@ -224,11 +226,11 @@ validation failed
   [me] - must be strictly positive (-1 given)
 ```
 
-The `getExceptions()` method returns an array of the validation errors indexed by field name, values are arrays of `ValidationException`:
+The `getExceptions()` method returns an array of the validation errors indexed by field name, values are arrays of `ValidationException` instances:
 
 ```php
 foreach ($exception->getExceptions() as $field_name => $exceptions) {
-    printf("Field '%s' as %d errors.\n", $field_name, count($exceptions));
+    printf("Field '%s' has %d errors.\n", $field_name, count($exceptions));
 }
 ```
 
