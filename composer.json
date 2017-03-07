@@ -9,7 +9,8 @@
         "php": ">=7.0"
     },
     "require-dev": {
-        "atoum/atoum": "~3.0.0"
+        "atoum/atoum": "~3.0.0",
+        "squizlabs/php_codesniffer": "~2.7"
     },
     "autoload": {
         "psr-4": {
@@ -21,7 +22,7 @@
             "Chanmix51\\ParameterJuicer\\Tests\\": "sources/tests"
         }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "RC",
     "extra": {
         "branch-alias": {
             "dev-master": "1.0-dev"

@@ -26,7 +26,9 @@ class PikaChuJuicer extends Juicer
                 ->addCleaner('pika', [$this, 'doTrimAndLowerString'])
                 ->addValidator('pika', [$this, 'mustNotBeEmptyString'])
             ->addField('chu', false)
-                ->addCleaner('chu', function($v) { return $v + 0; })
+                ->addCleaner('chu', function ($v) {
+                    return $v + 0;
+                })
                 ->addValidator('chu', [$this, 'mustBeANumberStrictlyPositive'])
         ;
     }

@@ -85,7 +85,9 @@ class ValidationException extends ParameterJuicerException
                 join(
                     ' | ',
                     array_map(
-                        function(ValidationException $e) { return $e->getMessage(); },
+                        function (ValidationException $e) {
+                            return $e->getMessage();
+                        },
                         $exceptions
                     )
                 )

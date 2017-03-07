@@ -95,7 +95,9 @@ class ParameterJuicer extends Atoum
                     ->isEqualTo([])
             ->assert("Testing an empty validator with values and STRATEGY_REFUSE_EXTRA_VALUES.")
             ->given($data = ['pika' => 'chu'])
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
                     ;
     }
@@ -125,12 +127,15 @@ class ParameterJuicer extends Atoum
     {
         $juicer = $this->newTestedInstance()
             ->addField('pika')
-            ->addValidator('pika', function($v) { })
+            ->addValidator('pika', function ($v) {
+            })
             ->addField('chu')
             ;
         $this
             ->assert("Checking validation with missing mandatory data.")
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ;
     }
@@ -142,21 +147,25 @@ class ParameterJuicer extends Atoum
      */
     public function testMandatoryFieldValidation()
     {
-        $validate_int = function($v) {
-            if (!is_int($v)) throw new ValidationException(
-                sprintf(
-                    "must be an integer ('%s' detected)",
-                    gettype($v)
-                )
-            );
+        $validate_int = function ($v) {
+            if (!is_int($v)) {
+                throw new ValidationException(
+                    sprintf(
+                        "must be an integer ('%s' detected)",
+                        gettype($v)
+                    )
+                );
+            }
         };
-        $validate_range = function($v) {
-            if (10 < $v || 1 > $v) throw new ValidationException(
-                sprintf(
-                    "must be between 1 and 10 (%d given)",
-                    $v
-                )
-            );
+        $validate_range = function ($v) {
+            if (10 < $v || 1 > $v) {
+                throw new ValidationException(
+                    sprintf(
+                        "must be between 1 and 10 (%d given)",
+                        $v
+                    )
+                );
+            }
         };
         $juicer = $this->newTestedInstance()
             ->addField('pika')
@@ -173,15 +182,21 @@ class ParameterJuicer extends Atoum
                 ->isEqualTo($data)
             ->assert("Checking validation with some wrong mandatory data (1/3).")
             ->given($data['pika'] = 19)
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ->assert("Checking validation with some wrong mandatory data (2/3).")
             ->given($data['pika'] = 'chu')
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ->assert("Checking validation with some wrong mandatory data (3/3).")
             ->given($data['pika'] = null)
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ;
             ;
@@ -199,16 +214,21 @@ class ParameterJuicer extends Atoum
             ->newTestedInstance()
             ->addField('pika')
                 ->setDefaultValue('pika', 'chu')
-                ->addCleaner('pika', function($v) { return trim($v); })
-                ->addValidator('pika', function($v) {
-                    if (strlen($v) === 0)
+                ->addCleaner('pika', function ($v) {
+                    return trim($v);
+                })
+                ->addValidator('pika', function ($v) {
+                    if (strlen($v) === 0) {
                         throw new ValidationException("must not be empty");
+                    }
                 })
             ;
 
         $this
             ->assert('A field in the set with no value must not trigger default value.')
-                ->exception(function() use ($juicer) { $juicer->squash(['pika' => null]); })
+                ->exception(function () use ($juicer) {
+                    $juicer->squash(['pika' => null]);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ->assert('A field not set must get a default value.')
                 ->array($juicer->squash([]))
@@ -225,14 +245,19 @@ class ParameterJuicer extends Atoum
     {
         $this
             ->assert('A mandatory field with a default value is OK when not provided.')
-            ->given($juicer = $this->newTestedInstance()->addField('pika')->setDefaultValue('pika', function() { return 'chu'; }))
+            ->given($juicer = $this->newTestedInstance()->addField('pika')->setDefaultValue('pika', function () {
+                return 'chu';
+            }))
                 ->array($juicer->squash([]))
                     ->isEqualTo(['pika' => 'chu'])
             ->assert('Default value does not apply when field is set.')
                 ->array($juicer->squash(['pika' => 'not chu']))
                     ->isEqualTo(['pika' => 'not chu'])
             ->assert('When the field exist but has not value, the default value does NOT apply.')
-            ->given($juicer->addCleaner('pika', function($v) { $v = trim($v); return strlen($v) === 0 ? null : $v; }))
+            ->given($juicer->addCleaner('pika', function ($v) {
+                $v = trim($v);
+                return strlen($v) === 0 ? null : $v;
+            }))
                 ->array($juicer->squash(['pika' => '   ']))
                     ->isEqualTo(['pika' => null])
             ->assert('Default value can not be a callable')
@@ -251,8 +276,12 @@ class ParameterJuicer extends Atoum
     {
         $juicer = $this->newTestedInstance()
             ->addField('pika')
-            ->addCleaner('pika', function($v) { return trim($v); })
-            ->addCleaner('pika', function($v) { return strtolower($v); })
+            ->addCleaner('pika', function ($v) {
+                return trim($v);
+            })
+            ->addCleaner('pika', function ($v) {
+                return strtolower($v);
+            })
             ;
         $this
             ->assert("Checking cleaners are called,")
@@ -271,8 +300,10 @@ class ParameterJuicer extends Atoum
     {
         $juicer = $this->newTestedInstance()
             ->addField('pika')
-            ->addCleaner('pika', function($v) { return trim($v); })
-            ->addValidator('pika', function($v) {
+            ->addCleaner('pika', function ($v) {
+                return trim($v);
+            })
+            ->addValidator('pika', function ($v) {
                 if (strlen($v) === 0) {
                     throw new ValidationException("is an empty string.");
                 }
@@ -282,7 +313,9 @@ class ParameterJuicer extends Atoum
         $this
             ->assert('Check it cleans first and then validate.')
             ->given($data = ['pika' => '   '])
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ;
     }
@@ -348,25 +381,30 @@ class ParameterJuicer extends Atoum
     {
         $juicer = $this->newTestedInstance()
             ->addField('pika')
-            ->addCleaner('pika', function($v) {
+            ->addCleaner('pika', function ($v) {
                 $v = preg_replace('/[^\w]+/', '', strtolower(trim($v)));
-                if ($v === '') throw new CleanerRemoveFieldException;
+                if ($v === '') {
+                    throw new CleanerRemoveFieldException;
+                }
                 return $v;
             })
             ->setDefaultValue('pika', 'default value')
             ->addValidator(
                 'pika',
-                function($v) { if (strlen(trim($v)) === 0)
-                    throw new ValidationException('can not be white string');
+                function ($v) {
+                    if (strlen(trim($v)) === 0) {
+                                       throw new ValidationException('can not be white string');
+                    }
                 }
-        )
+            )
             ->addField('chu')
             ->addCleaner(
                 'chu',
-                function($v) {
+                function ($v) {
                     $v = (int) $v;
-                    if ($v === 5)
+                    if ($v === 5) {
                         throw new CleanerRemoveFieldException;
+                    }
                     return $v;
                 }
             )
@@ -377,7 +415,9 @@ class ParameterJuicer extends Atoum
                 ->array($juicer->squash($data))
                     ->isEqualTo(['pika' => 'default value', 'chu' => 0])
             ->given($data = ['pika' => 'whatever', 'chu' => 5])
-                ->exception(function() use ($juicer, $data) { return $juicer->squash($data); })
+                ->exception(function () use ($juicer, $data) {
+                    return $juicer->squash($data);
+                })
                     ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
                     ->getValue()
                 ;

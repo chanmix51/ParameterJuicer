@@ -45,13 +45,14 @@ class PokemonJuicer extends Juicer
 
     protected function greaterThanZeroValidator($value)
     {
-        if ($value <= 0)
+        if ($value <= 0) {
             throw new ValidationException(
                 sprintf(
                     "must be strictly greater than 0. (%d given)",
                     $value
                 )
             );
+        }
     }
 
     protected function castToIntCleaner($value): int

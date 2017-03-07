@@ -2,7 +2,14 @@ language: php
 php:
   - "7.0"
   - "7.1"
+  - "nightly"
+  - "hhvm"
+matrix:
+  allow_failures:
+    - php: "nightly"
+    - php: "hhvm"
 install: composer install --dev
 script:
   - php vendor/atoum/atoum/bin/atoum --no-code-coverage -d sources/tests/Unit/ -af vendor/autoload.php
+  - ./vendor/bin/phpcs --standard=psr2 --runtime-set ignore_warnings_on_exit true --report=summary sources
 

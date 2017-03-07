@@ -54,7 +54,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     protected $default_values = [];
 
     /** @var  int       strategy of this juicer */
-    public    $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES;
+    public $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES;
 
     /**
      * addField
@@ -154,7 +154,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     public function setDefaultValue(string $name, $value): self
     {
         if (false === is_callable($value)) {
-            $value = function() use ($value) {
+            $value = function () use ($value) {
                 return $value;
             };
         }
@@ -264,7 +264,6 @@ class ParameterJuicer implements ParameterJuicerInterface
                     $field,
                     new ValidationException("missing mandatory field")
                 );
-
             } elseif ($is_set && isset($this->validators[$field])) {
                 $this->launchValidatorsFor(
                     $field,
@@ -380,4 +379,3 @@ class ParameterJuicer implements ParameterJuicerInterface
         return $this;
     }
 }
-
