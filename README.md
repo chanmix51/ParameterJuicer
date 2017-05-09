@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/chanmix51/ParameterJuicer.svg?branch=master)](https://travis-ci.org/chanmix51/ParameterJuicer)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/chanmix51/ParameterJuicer/?branch=master)
 [![License](https://poser.pugx.org/chanmix51/parameter-juicer/license.svg)](https://packagist.org/packages/chanmix51/parameter-juicer)
+[![Monthly Downloads](https://poser.pugx.org/chanmix51/parameter-juicer/d/monthly.png)](https://packagist.org/packages/chanmix51/parameter-juicer)
 
 How to extract the juice from your parameters, CSV, forms etc. data.
 ParameterJuicer is a simple data validator and cleaner for PHP 7.x extensively
