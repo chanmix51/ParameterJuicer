@@ -1,0 +1,16 @@
+ == VERSION 1.0.0
+
+ * add indispensable download stats
+ * make code PSR-2 compliant with PHPCS
+ * remove field name in exception message used in fixtures
+ * enable php 7.1 in travis
+ * update atoum to version 3.0.0
+ * allow to use a callable as default value
+ * ValidationException::hasException should return a boolean and not an integer
+ * update branch alias
+ * remove name for validators
+ * add ValidationException fancy output
+ * support complex validation & cleaning
+ * fix cleaners from applying only the last cleaner
+ * add a README
+ * add a working version of Juicer
