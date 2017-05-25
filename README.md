@@ -20,12 +20,7 @@ Simple example of an anonymous juicer:
 $juicer = (new ParameterJuicer)
     ->addField('a_string')
         ->addCleaner('a_string', function($v) { return trim(strtolower($v)); })
-        ->addValidator('a_string', function($v) {
-            if (strlen($v) === 0) {
-                throw new ValidationException('cannot be empty');
-                }
-            }
-        );
+        ->addValidator('a_string', function($v) { return (strlen($v) !== 0) ? null : 'cannot be empty'; });
 try {
     $juicer->squash(['a_string' => ' Pika CHU ']);
     // ↑ returns ['a_string' => 'pika chu']
@@ -59,14 +54,11 @@ validates the data according to the given definition.
         $turn_to_integer = function($v):int { return (int) $v; };
         $must_be_between_1_and_10 = function(int $value) {
             if (10 < $value || 1 > $value) {
-                throw new ValidationException(
-                    sprintf(
+                return sprintf(
                         "must be between 1 and 10 (%d given).",
                         $value
-                    )
-                );
-            }
-        };
+                    );
+            }};
 
         $juicer = (new Juicer)
             ->addField('pika')
@@ -131,21 +123,14 @@ class PikaChuJuicer extends ParameterJuicer
 
     public function mustNotBeEmptyString($value)
     {
-        if (strlen($value) === 0) {
-            throw new ValidationException("must no be an empty string");
-        }
+        return (strlen($value) !== 0) ? null : 'must no be an empty string';
     }
 
     public function mustBeANumberStrictlyPositive($value)
     {
-        if ($value <= 0) {
-            throw new ValidationException(
-                printf(
-                    "must be strictly positive (%f given)",
-                    $value
-                )
-            );
-        }
+        return ($value > 0)
+            ? null
+            : printf("must be strictly positive (%f given)", $value);
     }
 }
 
@@ -158,7 +143,7 @@ This is particularly useful because it makes cleaners and validators to be unit-
 
 ### Using a juicer class to clean & validate nested data.
 
-It may happen a dataset embeds in a field another dataset that already has its own Juicer class.
+It may happen a dataset embeds another dataset that already has its own Juicer class.
 
 ```php
 $juicer = (new Juicer)
@@ -194,13 +179,21 @@ In the example above, null or empty strings discard the field so a default value
 
 ### Validators
 
-Validators just indicate if the data respect the validation rules or not. When rules are not respected by a value, a `ValidationException` is thrown. This exception is collected by the juicer and all the values are validated. At the end of the process, if exceptions have been collected, they are all grouped in the same `ValidationException` instance which is then thrown so users get all the validation messages at once.
+Validators follow a binary logic: either the data is good or not. When a value is considered acceptable by the rules, the validator returns null. In the case a validation rule fails, validators must throw a ValidationException with the error message. It is also possible to just return the error message, it is wrapped in a ValidationException. This exception is collected by the juicer and all the values are validated. At the end of the process, if exceptions have been collected, they are all grouped in the same `ValidationException` instance which is then thrown so users get all the validation messages at once.
 
 ```php
 $validator = function($value) {
     if (!preg_match("/pika/", $value)) {
         throw new ValidationException("must NOT contain 'pika'");
     }
+}
+```
+
+```php
+$validator = function($value) {
+    return (preg_match("/pika/", $value))
+        ? null
+        : "must NOT contain 'pika'";
 }
 ```
 

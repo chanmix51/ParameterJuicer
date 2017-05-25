@@ -26,9 +26,7 @@ class PikaChuJuicer extends Juicer
                 ->addCleaner('pika', [$this, 'doTrimAndLowerString'])
                 ->addValidator('pika', [$this, 'mustNotBeEmptyString'])
             ->addField('chu', false)
-                ->addCleaner('chu', function ($v) {
-                    return $v + 0;
-                })
+                ->addCleaner('chu', function ($v) { return $v + 0; })
                 ->addValidator('chu', [$this, 'mustBeANumberStrictlyPositive'])
         ;
     }
@@ -40,20 +38,15 @@ class PikaChuJuicer extends Juicer
 
     protected function mustNotBeEmptyString($value)
     {
-        if (strlen($value) === 0) {
-            throw new ValidationException("cannot be empty.");
-        }
+        return (strlen($value) !== 0)
+            ? null
+            : 'cannot be empty';
     }
 
     protected function mustBeANumberStrictlyPositive($value)
     {
-        if ($value <= 0) {
-            throw new ValidationException(
-                sprintf(
-                    "must be strictly positive (%f given).",
-                    $value
-                )
-            );
-        }
+        return ($value > 0)
+            ? null
+            : sprintf("must be strictly greater than 0. (%f given)", $value);
     }
 }

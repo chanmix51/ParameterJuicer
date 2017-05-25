@@ -149,22 +149,20 @@ class ParameterJuicer extends Atoum
     {
         $validate_int = function ($v) {
             if (!is_int($v)) {
-                throw new ValidationException(
+                return
                     sprintf(
                         "must be an integer ('%s' detected)",
                         gettype($v)
-                    )
-                );
+                    );
             }
         };
         $validate_range = function ($v) {
             if (10 < $v || 1 > $v) {
-                throw new ValidationException(
+                return
                     sprintf(
                         "must be between 1 and 10 (%d given)",
                         $v
-                    )
-                );
+                    );
             }
         };
         $juicer = $this->newTestedInstance()
@@ -219,7 +217,7 @@ class ParameterJuicer extends Atoum
                 })
                 ->addValidator('pika', function ($v) {
                     if (strlen($v) === 0) {
-                        throw new ValidationException("must not be empty");
+                        return 'must not be empty';
                     }
                 })
             ;
@@ -305,7 +303,7 @@ class ParameterJuicer extends Atoum
             })
             ->addValidator('pika', function ($v) {
                 if (strlen($v) === 0) {
-                    throw new ValidationException("is an empty string.");
+                    return 'is an empty string';
                 }
             })
         ;
@@ -393,7 +391,7 @@ class ParameterJuicer extends Atoum
                 'pika',
                 function ($v) {
                     if (strlen(trim($v)) === 0) {
-                                       throw new ValidationException('can not be white string');
+                        throw new ValidationException('can not be white string');
                     }
                 }
             )

@@ -37,5 +37,5 @@ interface ParameterJuicerInterface
      *
      * @throws  ValidationException
      */
-    public function validate(array $values): ParameterJuicerInterface;
+    public function validate(array $values);
 }

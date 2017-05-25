@@ -36,8 +36,7 @@ class PokemonJuicer extends Juicer
         $this
             ->addField('pokemon_id')
                 ->addCleaner('pokemon_id', [$this, 'castToIntCleaner'])
-            ->addField('pika_chu')
-                ->addValidator('pika_chu', [$this, 'greaterThanZeroValidator'])
+                ->addValidator('pokemon_id', [$this, 'greaterThanZeroValidator'])
             ->addField('pika_chu')
                 ->addJuicer('pika_chu', new PikaChuJuicer)
             ;
@@ -45,14 +44,9 @@ class PokemonJuicer extends Juicer
 
     protected function greaterThanZeroValidator($value)
     {
-        if ($value <= 0) {
-            throw new ValidationException(
-                sprintf(
-                    "must be strictly greater than 0. (%d given)",
-                    $value
-                )
-            );
-        }
+        return ($value > 0)
+            ? null
+            : sprintf("must be strictly greater than 0. (%d given)", $value);
     }
 
     protected function castToIntCleaner($value): int

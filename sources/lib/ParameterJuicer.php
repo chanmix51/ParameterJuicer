@@ -214,7 +214,7 @@ class ParameterJuicer implements ParameterJuicerInterface
      *
      * @see     ParameterJuicerInterface
      */
-    public function validate(array $values): ParameterJuicerInterface
+    public function validate(array $values)
     {
         $exception = new ValidationException("validation failed");
 
@@ -226,8 +226,6 @@ class ParameterJuicer implements ParameterJuicerInterface
         if ($exception->hasExceptions()) {
             throw $exception;
         }
-
-        return $this;
     }
 
     /**
@@ -366,10 +364,8 @@ class ParameterJuicer implements ParameterJuicerInterface
     {
         foreach ($this->validators[$field] as $validator) {
             try {
-                if (call_user_func($validator, $value) === false) {
-                    throw new \RuntimeException(
-                        sprintf("One of the validators for the field '%s' has a PHP error.", $field)
-                    );
+                if (($return = call_user_func($validator, $value)) !== null) {
+                    throw new ValidationException((string) $return);
                 }
             } catch (ValidationException $e) {
                 $exception->addException($field, $e);
