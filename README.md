@@ -183,7 +183,7 @@ Validators follow a binary logic: either the data is good or not. When a value i
 
 ```php
 $validator = function($value) {
-    if (!preg_match("/pika/", $value)) {
+    if (preg_match("/pika/", $value)) {
         throw new ValidationException("must NOT contain 'pika'");
     }
 }
@@ -192,8 +192,8 @@ $validator = function($value) {
 ```php
 $validator = function($value) {
     return (preg_match("/pika/", $value))
-        ? null
-        : "must NOT contain 'pika'";
+        ? "must NOT contain 'pika'"
+        : null;
 }
 ```
 
