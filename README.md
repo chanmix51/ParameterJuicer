@@ -157,6 +157,26 @@ $juicer = (new Juicer)
     ;
 ```
 
+### Comparing fields for validation
+
+Each validator only sees the values it is responsible for, it makes the validation simple and easy to maintain. But there are some cases where validation rules must compare fields with other fields (like comparing password and password confirmation). It is possible to do that by adding validators to a nested juicer:
+
+```php
+$juicer = (new ParameterJuicer)
+    ->addField('my_form')
+        ->addJuicer('my_form', (new PasswordFormJuicer)
+        ->addValidator('my_form', function($val) {
+            return $values['pass'] === $values['repass']
+                ? null
+                : 'pass & repass do not match';
+        });
+try {
+    $clean_data = $juicer->squash(['my_form' => $form_data]);
+} catch (ValidationException $e) {
+    …
+}
+```
+
 ## Writing cleaners and validators.
 
 ### Cleaners
