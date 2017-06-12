@@ -376,9 +376,12 @@ class ParameterJuicer extends Atoum
     {
         $this
             ->assert('Checking mixing embedded validation with custom validators.')
-            ->given($cleanString = function($str) { return trim($str); })
+            ->given($cleanString = function ($str) {
+                return trim($str);
+            })
             ->given($mustBeNonEmptyString = function ($str) {
-                return $str !== '' ? null : 'must not be empty nor blank'; })
+                return $str !== '' ? null : 'must not be empty nor blank';
+            })
             ->given(
                 $juicer = ($this->newTestedInstance())
                     ->addField('my_form')
@@ -388,14 +391,16 @@ class ParameterJuicer extends Atoum
                                 ->addValidator('pass', $mustBeNonEmptyString)
                             ->addField('repass')
                                 ->addCleaner('repass', $cleanString)
-                                ->addValidator('repass', $mustBeNonEmptyString)
-                            )
+                                ->addValidator('repass', $mustBeNonEmptyString))
                     ->addValidator('my_form', function ($values) {
                         if ($values['pass'] !== $values['repass']) {
                             throw new ValidationException('pass & repass do not match');
-                        }}))
-            ->exception(function() use ($juicer) {
-                return $juicer->squash(['my_form' => ['pass' => 'pika', 'repass' => 'not pika']]);})
+                        }
+                    })
+            )
+            ->exception(function () use ($juicer) {
+                return $juicer->squash(['my_form' => ['pass' => 'pika', 'repass' => 'not pika']]);
+            })
             ->isInstanceOf('\Chanmix51\ParameterJuicer\Exception\ValidationException')
             ;
     }
