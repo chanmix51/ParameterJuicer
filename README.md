@@ -96,6 +96,26 @@ There are 3 strategies to handle extra data not defined in the plan:
 1. `ParameterJuicer::STRATEGY_IGNORE_EXTRA_VALUES` (1) discard extra data (this is the default strategy).
 1. `ParameterJuicer::STRATEGY_REFUSE_EXTRA_VALUES` (2) treat extra fields as anomalies and trigger the `ValidationException`.
 
+### Using form cleaners and validators
+
+Each validator only sees the values it is responsible for, it makes the validation simple and easy to maintain. But there are some cases where validation rules must compare fields with other fields (like comparing password and password confirmation).
+
+```php
+$juicer = (new Juicer)
+    ->addField('login')
+        ->addCleaner('login', function($v) { return strtolower(trim($v)); })
+        ->addValidator('login', function($v) { return $v === '' ? 'must not be empty' : null; })
+    ->addField('password')
+        ->addCleaner('password', 'trim')
+        ->addValidator('password', function($v) { return strlen($v) < 3 ? 'must not be less than 3 chars' : null; })
+    ->addField('repeat_password')
+        ->addCleaner('repeat_password', 'trim')
+    ->addFormValidator(function($values) {
+        if ($values['password'] != $values['repeat_password']) {
+            return 'passwords do not match';
+        }
+    });
+
 ### Custom Juicer class
 
 It is possible to embed cleaning & validation rules in a dedicated class:
@@ -157,9 +177,9 @@ $juicer = (new Juicer)
     ;
 ```
 
-### Comparing fields for validation
+### Local form validation or nested validation?
 
-Each validator only sees the values it is responsible for, it makes the validation simple and easy to maintain. But there are some cases where validation rules must compare fields with other fields (like comparing password and password confirmation). It is possible to do that by adding validators to a nested juicer:
+It is also possible to perform for cleaning & validation by adding validators to a nested juicer:
 
 ```php
 $juicer = (new ParameterJuicer)
@@ -176,6 +196,8 @@ try {
     …
 }
 ```
+
+Where to write such validations is a matter of context. If the rules are set in a Form(Cleaner|Validator) they belong to this type and they wille always be run whatever the outside context is. If the rules are in another juicer they are rules added to the original context. 
 
 ## Writing cleaners and validators.
 

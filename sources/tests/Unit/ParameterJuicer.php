@@ -494,11 +494,23 @@ class ParameterJuicer extends Atoum
                 ->isEqualTo(
                     ['pika' => 'aab', 'chu' => 3]
                 )
-                ->exception(function () use ($juicer) {
-                    $juicer->squash(
-                        ['pika' => ' Aab ', 'chu' => '2']
-                    );
-                })->message->contains('cannot be even')
+            ;
+
+        try {
+            $juicer->squash(['pika' => ' Aab ', 'chu' => '2']);
+            $exception = null;
+        } catch (ValidationException $e) {
+            $exception = $e;
+        }
+        $this
+            ->assert('Form validation throws validation exceptions.')
+            ->exception($exception)
+                ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
+            ->assert('Form validation exceptions are also nested.')
+            ->boolean($exception->hasExceptions())
+                ->isTrue()
+            ->exception($exception->getExceptions()[''][0])
+                ->message->contains('cannot be even')
             ;
     }
 }
