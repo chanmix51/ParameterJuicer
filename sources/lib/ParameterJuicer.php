@@ -53,6 +53,12 @@ class ParameterJuicer implements ParameterJuicerInterface
     /** @var  array     list of default values */
     protected $default_values = [];
 
+    /** @var  array     list of form cleaners, must be callables */
+    protected $form_cleaners = [];
+
+    /** @var  array     list of form validators, must be callables */
+    protected $form_validators = [];
+
     /** @var  int       strategy of this juicer */
     public $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES;
 
@@ -168,6 +174,30 @@ class ParameterJuicer implements ParameterJuicerInterface
     }
 
     /**
+     * addFormCleaner
+     *
+     * Add a new cleaner associated to the whole set of values.
+     */
+    public function addFormCleaner(callable $cleaner): self
+    {
+        $this->form_cleaners[] = $cleaner;
+
+        return $this;
+    }
+
+    /**
+     * addFormValidator
+     *
+     * Add a new validator to the whole set of values.
+     */
+    public function addFormValidator(callable $validator): self
+    {
+        $this->form_validators[] = $validator;
+
+        return $this;
+    }
+
+    /**
      * addJuicer
      *
      * Add a juicer to clean a validate a subset of data.
@@ -222,6 +252,7 @@ class ParameterJuicer implements ParameterJuicerInterface
             $this->refuseExtraFields($values, $exception);
         }
         $this->validateFields($values, $exception);
+        $this->validateForm($values, $exception);
 
         if ($exception->hasExceptions()) {
             throw $exception;
@@ -272,6 +303,16 @@ class ParameterJuicer implements ParameterJuicerInterface
         }
 
         return $this;
+    }
+
+    /**
+     * validateForm
+     *
+     * form wide validation
+     */
+    private function validateForm(array $values, ValidationException $exception): self
+    {
+        return $this->launchValidators($this->form_validators, '', $values, $exception);
     }
 
     /**
@@ -328,6 +369,10 @@ class ParameterJuicer implements ParameterJuicerInterface
             }
         }
 
+        foreach ($this->form_cleaners as $cleaner) {
+            $values = call_user_func($cleaner, $values);
+        }
+
         return $values;
     }
 
@@ -357,18 +402,30 @@ class ParameterJuicer implements ParameterJuicerInterface
      * launchValidatorsFor
      *
      * Triger validators for the given field if any.
-     *
-     * @throws  \RuntimeException if the callable fails.
      */
     private function launchValidatorsFor(string $field, $value, ValidationException $exception): self
     {
-        foreach ($this->validators[$field] as $validator) {
-            try {
-                if (($return = call_user_func($validator, $value)) !== null) {
-                    throw new ValidationException((string) $return);
-                }
-            } catch (ValidationException $e) {
-                $exception->addException($field, $e);
+        try {
+            $this->launchValidators($this->validators[$field], $field, $value, $exception);
+        } catch (ValidationException $e) {
+            $exception->addException($field, $e);
+        }
+
+        return $this;
+    }
+
+    /**
+     * launchValidators
+     *
+     * Apply validators against the given value.
+     *
+     * @throws  \RuntimeException if the callable fails.
+     */
+    private function launchValidators(array $validators, string $field, $value, ValidationException $exception): self
+    {
+        foreach ($validators as $validator) {
+            if (($return = call_user_func($validator, $value)) !== null) {
+                throw new ValidationException((string) $return);
             }
         }
 

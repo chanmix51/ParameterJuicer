@@ -460,4 +460,45 @@ class ParameterJuicer extends Atoum
             ->exception($exception)->message->contains('missing mandatory field')
             ;
     }
+
+    public function testFormFields()
+    {
+        $this
+            ->assert('Checking embeded validation works.')
+            ->given(
+                $juicer = (new PikaChuJuicer)
+                    ->addFormCleaner(function ($fields) {
+                        if (isset($fields['pika']) && $fields['pika'] === 'aaa' && isset($fields['chu'])) {
+                            unset($fields['chu']);
+                        }
+
+                        return $fields;
+                    })
+                    ->addFormValidator(function ($fields) {
+                        if ($fields['pika'] === 'aab') {
+                            if ($fields['chu'] % 2 === 0) {
+                                return 'cannot be even on a AAB pika code';
+                            }
+                        }
+                    })
+            )
+                ->array($juicer->squash(
+                    ['pika' => ' AaA ', 'chu' => '2']
+                ))
+                ->isEqualTo(
+                    ['pika' => 'aaa']
+                )
+                ->array($juicer->squash(
+                    ['pika' => ' Aab ', 'chu' => '3']
+                ))
+                ->isEqualTo(
+                    ['pika' => 'aab', 'chu' => 3]
+                )
+                ->exception(function () use ($juicer) {
+                    $juicer->squash(
+                        ['pika' => ' Aab ', 'chu' => '2']
+                    );
+                })->message->contains('cannot be even')
+            ;
+    }
 }
