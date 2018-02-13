@@ -481,6 +481,12 @@ class ParameterJuicer extends Atoum
                             }
                         }
                     })
+                    ->addFormValidator(function($fields) {
+                        if ($fields['pika'] === 'aad' && $fields['chu'] !== 0) {
+
+                            throw new ValidationException('AAD pika with a non zero chu');
+                        }
+                    })
             )
                 ->array($juicer->squash(
                     ['pika' => ' AaA ', 'chu' => '2']
@@ -503,7 +509,7 @@ class ParameterJuicer extends Atoum
             $exception = $e;
         }
         $this
-            ->assert('Form validation throws validation exceptions.')
+            ->assert('Form validation strings throw validation exceptions.')
             ->exception($exception)
                 ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
             ->assert('Form validation exceptions are also nested.')
@@ -511,6 +517,42 @@ class ParameterJuicer extends Atoum
                 ->isTrue()
             ->exception($exception->getExceptions()[''][0])
                 ->message->contains('cannot be even')
+            ;
+        try {
+            $juicer->squash(['pika' => ' Aad ', 'chu' => '2']);
+            $exception = null;
+        } catch (ValidationException $e) {
+            $exception = $e;
+        }
+        $this
+            ->assert('When form validators throw exceptions, they are nested.')
+            ->exception($exception)
+                ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
+            ->boolean($exception->hasExceptions())
+                ->isTrue()
+            ->exception($exception->getExceptions()[''][0])
+                ->message->contains('non zero chu')
+            ;
+    }
+
+    public function testFormFieldsWithDefaultValues()
+    {
+        $this
+            ->assert('Checking fields removal in the form cleaning phase still makes default values to apply.')
+            ->given($juicer = $this->newTestedInstance()
+                ->addField('first')
+                    ->setDefaultValue('first', 'default')
+                    ->addValidator('first', function($v) { return (strlen(trim($v)) === 0) ? 'must not be empty or blank' : null; })
+                ->addFormCleaner(function($v) { unset($v['first']); return $v; })
+            )
+            ->array($juicer->squash([]))
+                ->isEqualTo(['first' => 'default'])
+            ->array($juicer->squash(['first' => 'whatever']))
+                ->isEqualTo(['first' => 'default'])
+            ->array($juicer->squash(['first' => '   ']))
+                ->isEqualTo(['first' => 'default'])
+            ->array($juicer->squash([]))
+                ->isEqualTo(['first' => 'default'])
             ;
     }
 }
