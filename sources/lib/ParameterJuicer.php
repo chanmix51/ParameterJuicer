@@ -39,6 +39,8 @@ class ParameterJuicer implements ParameterJuicerInterface
     const STRATEGY_IGNORE_EXTRA_VALUES = 0;
     const STRATEGY_REFUSE_EXTRA_VALUES = 1;
     const STRATEGY_ACCEPT_EXTRA_VALUES = 2;
+    const FORM_VALIDATORS_CONDITIONAL=0;
+    const FORM_VALIDATORS_ALWAYS=1;
 
     /** @var  array     list of validators, must be callables */
     protected $validators = [];
@@ -61,6 +63,9 @@ class ParameterJuicer implements ParameterJuicerInterface
 
     /** @var  int       strategy of this juicer */
     public $strategy = self::STRATEGY_IGNORE_EXTRA_VALUES;
+
+    /** @var  int       is form validation triggered when field validation fails */
+    public $form_validation_strategy = self::FORM_VALIDATORS_CONDITIONAL;
 
     /**
      * addField
@@ -225,6 +230,18 @@ class ParameterJuicer implements ParameterJuicerInterface
     }
 
     /**
+     * setFormValidationStrategy
+     *
+     * Set the form validators strategy
+     */
+    public function setFormValidationStrategy(int $strategy): self
+    {
+        $this->form_validation_strategy = $strategy;
+
+        return $this;
+    }
+
+    /**
      * squash
      *
      * Clean & validate the given data according to the definition.
@@ -252,7 +269,10 @@ class ParameterJuicer implements ParameterJuicerInterface
             $this->refuseExtraFields($values, $exception);
         }
         $this->validateFields($values, $exception);
-        $this->validateForm($values, $exception);
+
+        if (!$exception->hasExceptions() || $this->form_validation_strategy === self::FORM_VALIDATORS_ALWAYS) {
+            $this->validateForm($values, $exception);
+        }
 
         if ($exception->hasExceptions()) {
             throw $exception;

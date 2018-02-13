@@ -461,6 +461,11 @@ class ParameterJuicer extends Atoum
             ;
     }
 
+    /**
+     * testFormFields
+     *
+     * Test form cleaners and validators
+     */
     public function testFormFields()
     {
         $this
@@ -481,9 +486,8 @@ class ParameterJuicer extends Atoum
                             }
                         }
                     })
-                    ->addFormValidator(function($fields) {
+                    ->addFormValidator(function ($fields) {
                         if ($fields['pika'] === 'aad' && $fields['chu'] !== 0) {
-
                             throw new ValidationException('AAD pika with a non zero chu');
                         }
                     })
@@ -535,6 +539,11 @@ class ParameterJuicer extends Atoum
             ;
     }
 
+    /**
+     * testFormFieldsWithDefaultValues
+     *
+     * Ensure default values operates seamlessly with form fields.
+     */
     public function testFormFieldsWithDefaultValues()
     {
         $this
@@ -542,9 +551,13 @@ class ParameterJuicer extends Atoum
             ->given($juicer = $this->newTestedInstance()
                 ->addField('first')
                     ->setDefaultValue('first', 'default')
-                    ->addValidator('first', function($v) { return (strlen(trim($v)) === 0) ? 'must not be empty or blank' : null; })
-                ->addFormCleaner(function($v) { unset($v['first']); return $v; })
-            )
+                    ->addValidator('first', function ($v) {
+                        return (strlen(trim($v)) === 0) ? 'must not be empty or blank' : null;
+                    })
+                ->addFormCleaner(function ($v) {
+                    unset($v['first']);
+                    return $v;
+                }))
             ->array($juicer->squash([]))
                 ->isEqualTo(['first' => 'default'])
             ->array($juicer->squash(['first' => 'whatever']))
@@ -553,6 +566,79 @@ class ParameterJuicer extends Atoum
                 ->isEqualTo(['first' => 'default'])
             ->array($juicer->squash([]))
                 ->isEqualTo(['first' => 'default'])
+            ;
+    }
+
+    /**
+     * testFormValidatorStrategies
+     *
+     * Form validators are triggered or not depending on form validation
+     * strategy.
+     */
+    public function testFormValidatorStrategies()
+    {
+        $turn_to_integer = function ($v) {
+            return (int) ($v + 0);
+        };
+        $must_be_positive = function ($v) {
+            return ($v > 0) ? null : 'must be strictly positive';
+        };
+        $juicer = $this->newTestedInstance()
+            ->addField('min')
+            ->addCleaner('min', $turn_to_integer)
+            ->addValidator('min', $must_be_positive)
+            ->addField('max')
+            ->addCleaner('max', $turn_to_integer)
+            ->addValidator('max', $must_be_positive)
+            ->addFormValidator(function ($values) {
+                return ($values['min'] >= $values['max'])
+                    ? '"min" must be strictly lesser than "max"'
+                    : null;
+            })
+            ;
+
+        try {
+            $juicer->squash(['min' => 0, 'chu' => '2']);
+            $exception = null;
+        } catch (ValidationException $e) {
+            $exception = $e;
+        }
+        $this
+            ->assert('Form validators are not triggered by default using the FORM_VALIDATORS_CONDITIONAL strategy when field validation fails.')
+            ->exception($exception)
+                ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
+            ->array($exception->getExceptions())
+                ->hasSize(2)
+                ->hasKeys(['min', 'max'])
+            ;
+        try {
+            $juicer->squash(['min' => 3, 'max' => 1]);
+            $exception = null;
+        } catch (ValidationException $e) {
+            $exception = $e;
+        }
+        $this
+            ->assert('Form validators are only triggered by default using the FORM_VALIDATORS_CONDITIONAL strategy when field validation passes.')
+            ->exception($exception)
+                ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
+            ->array($exception->getExceptions())
+                ->hasSize(1)
+                ->hasKeys([''])
+            ;
+        try {
+            $juicer->setFormValidationStrategy(Juicer::FORM_VALIDATORS_ALWAYS)
+                ->squash(['min' => 2, 'max' => 0]);
+            $exception = null;
+        } catch (ValidationException $e) {
+            $exception = $e;
+        }
+        $this
+            ->assert('Form validators are always triggered when using FORM_VALIDATORS_ALWAYS strategy.')
+            ->exception($exception)
+                ->isInstanceOf('Chanmix51\ParameterJuicer\Exception\ValidationException')
+            ->array($exception->getExceptions())
+                ->hasSize(2)
+                ->hasKeys(['max', ''])
             ;
     }
 }
