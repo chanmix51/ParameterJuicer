@@ -1,3 +1,11 @@
+ == VERSION 1.1.0
+
+ * use form validation strategy
+ * fix nested exception bug with form validators
+ * add form cleaners and validators
+ * add test mixing juicer & validator
+ * make validators just return errors
+
  == VERSION 1.0.0
 
  * add indispensable download stats
