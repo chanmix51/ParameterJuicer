@@ -115,6 +115,7 @@ $juicer = (new Juicer)
             return 'passwords do not match';
         }
     });
+```
 
 ### Custom Juicer class
 
