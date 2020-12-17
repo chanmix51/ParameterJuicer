@@ -6,10 +6,10 @@
     "license":  "MIT",
     "authors":  [ { "name": "Grégoire HUBERT", "email": "hubert.greg@gmail.com", "homepage": "http://www.coolkeums.org" } ],
     "require": {
-        "php": ">=7.0"
+        "php": ">=8.0"
     },
     "require-dev": {
-        "atoum/atoum": "~3.0.0",
+        "atoum/atoum": "~4.0.0",
         "squizlabs/php_codesniffer": "~2.7"
     },
     "autoload": {
@@ -25,7 +25,7 @@
     "minimum-stability": "stable",
     "extra": {
         "branch-alias": {
-            "dev-master": "1.2-dev"
+            "dev-master": "2.0-dev"
         }
     }
 

@@ -5,8 +5,10 @@
 [![License](https://poser.pugx.org/chanmix51/parameter-juicer/license.svg)](https://packagist.org/packages/chanmix51/parameter-juicer)
 [![Monthly Downloads](https://poser.pugx.org/chanmix51/parameter-juicer/d/monthly.png)](https://packagist.org/packages/chanmix51/parameter-juicer)
 
+This is the **experimental** branch of Parameter Juicer. If you want to use it in for your projects, it is advised to use the 1.x branches.
+
 How to extract the juice from your parameters, CSV, forms etc. data.
-ParameterJuicer is a simple data validator and cleaner for PHP 7.x extensively
+ParameterJuicer is a simple data validator and cleaner for PHP 8.x extensively
 unit tested.
 
 It features:
@@ -116,6 +118,13 @@ $juicer = (new Juicer)
         }
     });
 ```
+### Form validation strategies
+
+By default, form validation is not triggered if the fields validation fails.
+It is possible to always launch form validation using the `setFormValidationStrategy` method:
+
+ 1. `ParameterJuicer::FORM_VALIDATORS_CONDITIONAL` (default)
+ 1. `ParameterJuicer::FORM_VALIDATORS_ALWAYS`
 
 ### Custom Juicer class
 

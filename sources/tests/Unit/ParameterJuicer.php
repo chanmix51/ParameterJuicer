@@ -15,6 +15,7 @@ use Chanmix51\ParameterJuicer\Exception\ValidationException;
 use Chanmix51\ParameterJuicer\Exception\CleanerRemoveFieldException;
 use Chanmix51\ParameterJuicer\Tests\Fixtures\PokemonJuicer;
 use Chanmix51\ParameterJuicer\Tests\Fixtures\PikaChuJuicer;
+use Chanmix51\ParameterJuicer\Tests\Fixtures\Position;
 
 use \Atoum;
 
@@ -33,8 +34,6 @@ use \Atoum;
 class ParameterJuicer extends Atoum
 {
     /**
-     * testEmptyValidation
-     *
      * Test empty validation works with STRATEGY_ACCEPT_EXTRA_VALUES.
      */
     public function testEmptyValidationWithAcceptStrategy()
@@ -55,8 +54,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testEmptyValidationWithIgnoreStrategy
-     *
      * Empty validator with an ignore strategy returns empty sets.
      */
     public function testEmptyValidationWithIgnoreStrategy()
@@ -79,8 +76,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testEmptyValidationWithRefuseStrategy
-     *
      * This must refuse every values set but empty ones.
      */
     public function testEmptyValidationWithRefuseStrategy()
@@ -103,8 +98,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * butPikaOrChu
-     *
      * Data provider for testMandatoryFieldsValidationFail
      */
     public function butPikaOrChu(): array
@@ -117,8 +110,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testMandatoryFieldsValidationFail
-     *
      * Missing mandatory fields must fail validation.
      *
      * @dataProvider butPikaOrChu
@@ -141,8 +132,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testMandatoryFieldValidation
-     *
      * Testing validation & mandatory fields
      */
     public function testMandatoryFieldValidation()
@@ -201,8 +190,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testMandatoryWithNull
-     *
      * Null set fields must be considered as being present hence trigger
      * cleaning and validation. They must not be set with default value.
      */
@@ -333,8 +320,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * completeUseThatPass
-     *
      * More complex scenarios that pass.
      * @dataProvider provideCompleteUseThatPass
      */
@@ -349,8 +334,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testEmbededValidators
-     *
      * Quick test for embeded juicers.
      */
     public function testEmbededValidators()
@@ -368,7 +351,7 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testAddValidatorsWithEmbedded
+     * Check mixing embedded validation with custom validators
      */
     public function testAddValidatorsWithEmbedded()
     {
@@ -404,8 +387,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testCleanerAndValidatorWorkflow
-     *
      * This tests that the order is the following:
      * 1 - clean
      * 2 - apply default value
@@ -462,14 +443,12 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testFormFields
-     *
      * Test form cleaners and validators
      */
     public function testFormFields()
     {
         $this
-            ->assert('Checking embeded validation works.')
+            ->assert('Testing form cleaners')
             ->given(
                 $juicer = (new PikaChuJuicer)
                     ->addFormCleaner(function ($fields) {
@@ -540,8 +519,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testFormFieldsWithDefaultValues
-     *
      * Ensure default values operates seamlessly with form fields.
      */
     public function testFormFieldsWithDefaultValues()
@@ -570,8 +547,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testFormValidatorStrategies
-     *
      * Form validators are triggered or not depending on form validation
      * strategy.
      */
@@ -585,11 +560,11 @@ class ParameterJuicer extends Atoum
         };
         $juicer = $this->newTestedInstance()
             ->addField('min')
-            ->addCleaner('min', $turn_to_integer)
-            ->addValidator('min', $must_be_positive)
+                ->addCleaner('min', $turn_to_integer)
+                ->addValidator('min', $must_be_positive)
             ->addField('max')
-            ->addCleaner('max', $turn_to_integer)
-            ->addValidator('max', $must_be_positive)
+                ->addCleaner('max', $turn_to_integer)
+                ->addValidator('max', $must_be_positive)
             ->addFormValidator(function ($values) {
                 return ($values['min'] >= $values['max'])
                     ? '"min" must be strictly lesser than "max"'
@@ -640,5 +615,38 @@ class ParameterJuicer extends Atoum
                 ->hasSize(2)
                 ->hasKeys(['max', ''])
             ;
+    }
+
+    /**
+     * Check the nested juicers are squashed during the cleaning phase
+     */
+    public function testSquashSubJuicers()
+    {
+        $castToFloat = function($v): float { return (float) $v; };
+        $juicer = $this->newTestedInstance()
+            ->addField('position')
+                ->addJuicer(
+                    'position',
+                    $this->newTestedInstance()
+                        ->addField('latitude')
+                            ->addCleaner('latitude', $castToFloat)
+                        ->addField('longitude')
+                            ->addCleaner('longitude', $castToFloat)
+                )
+                ->addCleaner('position', function($v) {
+                    try {
+                        return Position::new($v['latitude'], $v['longitude']);
+                    } catch (\DomainException $e) {
+                        return null;
+                    }
+                })
+            ;
+
+        $this
+            ->assert('Check the subform is squashed before being cleaned in the form.')
+            ->given($data = $juicer->squash(['position' => ['latitude' => '0.1', 'longitude' => '-99.1234']]))
+            ->array($data)
+                ->object['position']->isEqualTo(Position::new(0.1, -99.1234))
+        ;
     }
 }

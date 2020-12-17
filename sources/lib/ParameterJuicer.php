@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * This file is part of Chanmix51’s ParameterJuicer package.
  *
@@ -36,10 +36,27 @@ use Chanmix51\ParameterJuicer\ParameterJuicerInterface;
  */
 class ParameterJuicer implements ParameterJuicerInterface
 {
+    /**
+     *  discard extra values (default)
+     */
     const STRATEGY_IGNORE_EXTRA_VALUES = 0;
+    /**
+     * error when extra values
+     */
     const STRATEGY_REFUSE_EXTRA_VALUES = 1;
+    /**
+     * accept extra values CAUTION:
+     * This could lead to unclean & unvalidated values to leak into 
+     * safe area. Use this only if you know what you are doing.
+     */
     const STRATEGY_ACCEPT_EXTRA_VALUES = 2;
+    /**
+     *  do not lauch form validation if field validation fails (default)
+     */
     const FORM_VALIDATORS_CONDITIONAL=0;
+    /**
+     *  always launch form validation
+     */
     const FORM_VALIDATORS_ALWAYS=1;
 
     /** @var  array     list of validators, must be callables */
@@ -212,8 +229,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     public function addJuicer(string $name, ParameterJuicerInterface $juicer): self
     {
         return $this
-            ->addCleaner($name, [$juicer, 'clean'])
-            ->addValidator($name, [$juicer, 'validate'])
+            ->addCleaner($name, [$juicer, 'squash'])
             ;
     }
 
