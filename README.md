@@ -116,6 +116,13 @@ $juicer = (new Juicer)
         }
     });
 ```
+### Form validation strategies
+
+By default, form validation is not triggered if the fields validation fails.
+It is possible to always launch form validation using the `setFormValidationStrategy` method:
+
+ 1. `ParameterJuicer::FORM_VALIDATORS_CONDITIONAL` (default)
+ 1. `ParameterJuicer::FORM_VALIDATORS_ALWAYS`
 
 ### Custom Juicer class
 

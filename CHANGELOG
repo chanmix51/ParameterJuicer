@@ -1,3 +1,7 @@
+ == VERSION 1.2.0
+
+ * update README: last version support of PHP 7.x
+
  == VERSION 1.1.0
 
  * use form validation strategy
