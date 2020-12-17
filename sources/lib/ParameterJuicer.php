@@ -404,7 +404,7 @@ class ParameterJuicer implements ParameterJuicerInterface
                         $values[$field_name] =
                             call_user_func($cleaner, $values[$field_name])
                             ;
-                    } catch (CleanerRemoveFieldException $e) {
+                    } catch (\Exception $e) {
                         unset($values[$field_name]);
                     }
                 }

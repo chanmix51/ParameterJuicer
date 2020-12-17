@@ -222,8 +222,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testDefaultValues
-     *
      * Test default values with mandatory fields and cleaners behaviors.
      */
     public function testDefaultValues()
@@ -253,8 +251,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testCleaner
-     *
      * Simple test for cleaners.
      */
     public function testCleaner()
@@ -277,8 +273,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * testCleanBeforeValidate
-     *
      * Check cleaning is executed before validation.
      */
     public function testCleanBeforeValidate()
@@ -306,8 +300,6 @@ class ParameterJuicer extends Atoum
     }
 
     /**
-     * provideCompleteUseThatPass
-     *
      * Data provider for completeUseThatPass
      */
     public function provideCompleteUseThatPass(): array
@@ -648,5 +640,23 @@ class ParameterJuicer extends Atoum
             ->array($data)
                 ->object['position']->isEqualTo(Position::new(0.1, -99.1234))
         ;
+    }
+
+    /**
+     * check that an exception in the cleaner does not interrupt validation
+     * process
+     */
+    public function testCleaningInterrupt()
+    {
+        $this
+            ->assert('exception in the cleaners does not interrupt the validation process')
+            ->given($juicer = $this->newTestedInstance()
+                ->addField('something')
+                    ->addCleaner('something', function($v) { throw new \Exception('A'); })
+            )
+            ->exception(function() use ($juicer) { return $juicer->squash(['something' => 'something']); })
+                ->isInstanceOf(ValidationException::class)
+                ->hasMessage('validation failed')
+            ;
     }
 }
