@@ -46,7 +46,7 @@ class ParameterJuicer implements ParameterJuicerInterface
     const STRATEGY_REFUSE_EXTRA_VALUES = 1;
     /**
      * accept extra values CAUTION:
-     * This could lead to unclean & unvalidated values to leak into 
+     * This could lead to unclean & unvalidated values to leak into
      * safe area. Use this only if you know what you are doing.
      */
     const STRATEGY_ACCEPT_EXTRA_VALUES = 2;

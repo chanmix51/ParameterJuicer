@@ -614,7 +614,9 @@ class ParameterJuicer extends Atoum
      */
     public function testSquashSubJuicers()
     {
-        $castToFloat = function($v): float { return (float) $v; };
+        $castToFloat = function ($v): float {
+            return (float) $v;
+        };
         $juicer = $this->newTestedInstance()
             ->addField('position')
                 ->addJuicer(
@@ -625,7 +627,7 @@ class ParameterJuicer extends Atoum
                         ->addField('longitude')
                             ->addCleaner('longitude', $castToFloat)
                 )
-                ->addCleaner('position', function($v) {
+                ->addCleaner('position', function ($v) {
                     try {
                         return Position::new($v['latitude'], $v['longitude']);
                     } catch (\DomainException $e) {
@@ -650,11 +652,16 @@ class ParameterJuicer extends Atoum
     {
         $this
             ->assert('exception in the cleaners does not interrupt the validation process')
-            ->given($juicer = $this->newTestedInstance()
-                ->addField('something')
-                    ->addCleaner('something', function($v) { throw new \Exception('A'); })
+            ->given(
+                $juicer = $this->newTestedInstance()
+                    ->addField('something')
+                        ->addCleaner('something', function ($v) {
+                            throw new \Exception('A');
+                        })
             )
-            ->exception(function() use ($juicer) { return $juicer->squash(['something' => 'something']); })
+            ->exception(function () use ($juicer) {
+                return $juicer->squash(['something' => 'something']);
+            })
                 ->isInstanceOf(ValidationException::class)
                 ->hasMessage('validation failed')
             ;

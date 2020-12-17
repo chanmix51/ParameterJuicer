@@ -2,19 +2,19 @@
 
 namespace Chanmix51\ParameterJuicer\Tests\Fixtures;
 
-class Position {
-    private function __construct(
-        private float $latitude,
-        private float $longitude
-    ) {}
+class Position
+{
+    private function __construct(private float $latitude, private float $longitude)
+    {
+    }
 
-    public static function new(float $latitude, float $longitude): Self
+    public static function new(float $latitude, float $longitude): self
     {
         if ($latitude < -90 || $latitude > 90) {
             throw new \DomainException(
                 sprintf("'%s' is not a valid latitude", $latitude)
             );
-        } else if ($longitude < -180 || $longitude > 180) {
+        } elseif ($longitude < -180 || $longitude > 180) {
             throw new \DomainException(
                 sprintf("'%s' is not a valid longitude", $longitude)
             );
@@ -23,4 +23,3 @@ class Position {
         return new Position($latitude, $longitude);
     }
 }
-
