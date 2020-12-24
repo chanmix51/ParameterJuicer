@@ -44,6 +44,12 @@ It is possible to create dedicated classes to validate and clean structures with
 
 ## Usage
 
+### Responsibilities
+
+The **cleaners** are responsible for casting data in the expected type & format. If the casting is impossible, the cleaner can throw an exception and the field is discarded.
+
+The **validators** are responsible for ensuring the business rules for the data are respected. Most of the time, it is about data being in a defined range of values.
+
 ### Anonymous definition
 
 Here is a fast and simple example of an anonymous juicer. It cleans and
